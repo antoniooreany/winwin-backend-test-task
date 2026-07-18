@@ -6,80 +6,94 @@ Backend test task implementation for WinWin.travel.
 
 This repository contains two Spring Boot services:
 
-- `auth-api` — authentication service with JWT-based auth logic
-- `data-api` — internal data service used by `auth-api`
+- \uth-api\ — authentication service with JWT-based auth logic.
+- \data-api\ — internal data service used by \uth-api\.
 
-The project is developed with a GitFlow-style branching model and validated through Maven test runs and GitHub Actions CI.
+The project is developed with a GitFlow-style branching model and validated
+through Maven test runs and GitHub Actions CI.
 
 ## Current status
 
 At the current stage:
 
 - both modules build successfully;
-- `auth-api` and `data-api` pass Maven tests;
-- JWT authentication flow is implemented and covered by tests;
-- documentation and release preparation are in progress.
+- \uth-api\ and \data-api\ pass Maven tests;
+- JWT authentication flow is implemented and covered by unit tests;
+- basic CI is configured via GitHub Actions;
+- initial release documentation (LICENSE, CHANGELOG, CONTRIBUTING, SECURITY)
+  is in place.
 
 ## Repository structure
 
-```text
+\\\	ext
 .
-├── auth-api
-├── data-api
-├── docs
+├── auth-api        # Authentication service (JWT, Spring Security)
+├── data-api        # Data service used by auth-api
+├── docs            # Additional documentation (if any)
+├── scripts         # Helper scripts (e.g. local dev helpers)
 └── .github/workflows
-```
+    └── ci.yml      # CI pipeline (Maven tests)
+\\\
 
 ## Stack
 
 - Java 21
-- Spring Boot
+- Spring Boot 4.x
 - Spring Security
 - Maven
 - JUnit 5
-- PostgreSQL (planned/full flow)
-- Docker / Docker Compose (planned/full flow)
+- PostgreSQL (planned for full flow)
+- Docker / Docker Compose (planned for full flow)
 - GitHub Actions
 
 ## Build and test
 
 Run tests for each module separately:
 
-```bash
+\\\ash
 mvn -f auth-api/pom.xml clean test
-mvn -f data-api/pom.xml test
-```
+mvn -f data-api/pom.xml clean test
+\\\
+
+CI runs the same commands on each push and Pull Request.
 
 ## Authentication
 
-`auth-api` contains JWT-related authentication logic.
+\uth-api\ contains JWT-related authentication logic.
 
 Implemented at this stage:
 
 - token generation;
 - username extraction from token;
 - token validation;
-- focused unit tests for JWT service behavior.
-
-## Planned next steps
-
-- implement protected `/api/process`;
-- add internal call from `auth-api` to `data-api`;
-- add persistence for processing logs and full Postgres-backed flow;
-- add Dockerfiles and `docker-compose.yml`;
-- finalize end-to-end smoke test and release.
+- focused unit tests for JWT service behavior;
+- basic auth service tests around registration and login.
 
 ## Development workflow
 
 The project follows GitFlow conventions:
 
-- `main` — stable release history
-- `develop` — integration branch
-- `feature/*` — implementation branches
-- `release/*` — release stabilization branches
-- `hotfix/*` — urgent fixes
+- \main\ — stable release history.
+- \develop\ — integration branch.
+- \eature/*\ — implementation branches.
+- \elease/*\ — release stabilization branches.
+- \hotfix/*\ — urgent fixes.
 
-## Notes
+All changes should go through Pull Requests, with green Maven tests and CI.
 
-This repository intentionally avoids overengineering.
-The goal is to provide a clean, understandable, and incrementally deliverable backend solution.
+## Changelog and releases
+
+User-facing changes are tracked in [CHANGELOG.md](./CHANGELOG.md).
+
+Tags such as \0.1.0-rc1\ can be used to mark pre-releases. Each release
+should be associated with:
+
+- a Git tag,
+- an entry in the changelog,
+- a passing CI build.
+
+## License
+
+This project is licensed under the MIT License.
+See [LICENSE](./LICENSE) for details.
+
