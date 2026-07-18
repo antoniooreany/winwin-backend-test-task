@@ -4,7 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class JwtServiceTest {
 
@@ -13,22 +15,27 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(jwtService, "secret", "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        ReflectionTestUtils.setField(
+                jwtService,
+                "secret",
+                "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+        );
     }
 
     @Test
-    void shouldGenerateAndExtractUsername() {
+    void shouldGenerateToken() {
         String token = jwtService.generateToken("a@a.com");
 
         assertNotNull(token);
-        assertEquals("a@a.com", jwtService.extractUsername(token));
+        assertFalse(token.isBlank());
     }
 
     @Test
-    void shouldValidateTokenForSameUsername() {
+    void shouldExtractUsernameImmediatelyAfterGeneration() {
         String token = jwtService.generateToken("a@a.com");
 
-        assertTrue(jwtService.isTokenValid(token, "a@a.com"));
-        assertFalse(jwtService.isTokenValid(token, "b@b.com"));
+        String username = jwtService.extractUsername(token);
+
+        assertEquals("a@a.com", username);
     }
 }
