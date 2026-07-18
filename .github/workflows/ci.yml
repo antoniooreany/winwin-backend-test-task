@@ -10,7 +10,7 @@ on:
   pull_request:
 
 jobs:
-  verify-structure:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,20 +22,10 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-        #   cache: maven
+          cache: maven
 
-      - name: Verify repository structure
-        run: |
-          ls -la
-          test -d auth-api
-          test -d data-api
-          test -d docs
-          test -d scripts
-          test -d .github/workflows
-          test -f README.md
-          test -f .gitignore
-          test -f .editorconfig
-          test -f .env.example
-          test -f auth-api/.gitkeep
-          test -f data-api/.gitkeep
-          test -f scripts/.gitkeep
+      - name: Build auth-api
+        run: mvn -f auth-api/pom.xml clean package -DskipTests
+
+      - name: Build data-api
+        run: mvn -f data-api/pom.xml clean package -DskipTests
