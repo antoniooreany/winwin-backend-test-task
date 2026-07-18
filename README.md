@@ -2,127 +2,77 @@
 
 Backend test task implementation for WinWin.travel.
 
-## Overview
+## What is included
 
-This repository contains two Spring Boot services:
+The project consists of two Spring Boot services:
 
-- `auth-api` — authentication service with JWT-based auth logic.
-- `data-api` — internal data service used by `auth-api`.
+- `auth-api` — handles registration, login, JWT authentication, and protected requests.
+- `data-api` — internal service used by `auth-api` for text transformation.
 
-The project is developed with a GitFlow-style branching model and validated through Maven test runs and GitHub Actions CI.
+The application runs locally with Docker Compose and PostgreSQL.
 
-## Current status
-
-At the current stage:
-
-- both modules build successfully;
-- both modules pass Maven tests;
-- JWT authentication flow is implemented;
-- local end-to-end flow works with PostgreSQL and Docker Compose;
-- basic CI is configured via GitHub Actions;
-- release documentation (`LICENSE`, `CHANGELOG`, `CONTRIBUTING`, `SECURITY`) is in place.
-
-## Repository structure
-
-```text
-.
-├── auth-api        # Authentication service (JWT, Spring Security)
-├── data-api        # Internal data service
-├── docs            # Additional documentation (if any)
-├── scripts         # Helper scripts
-└── .github/workflows
-    └── ci.yml      # CI pipeline
-```
-
-## Stack
+## Tech stack
 
 - Java 21
 - Spring Boot 4.x
 - Spring Security
+- Spring Data JPA
 - Maven
-- JUnit 5
 - PostgreSQL
-- Docker / Docker Compose
+- Docker Compose
 - GitHub Actions
 
-## Build and test
+## Current state
 
-Run tests for each module separately:
+Implemented and verified:
 
-```bash
-mvn -f auth-api/pom.xml clean test
-mvn -f data-api/pom.xml clean test
-```
+- build and tests for both modules;
+- working Docker Compose setup;
+- PostgreSQL integration;
+- user registration and login;
+- JWT-protected endpoint flow;
+- internal service-to-service call from `auth-api` to `data-api`.
 
-Build runnable JARs:
+## Run locally
 
-```bash
-mvn -f auth-api/pom.xml clean package -DskipTests
-mvn -f data-api/pom.xml clean package -DskipTests
-```
-
-CI runs Maven validation on each push and Pull Request.
-
-## Running locally with Docker Compose
-
-### Prerequisites
-
-- JDK 21
-- Maven
-- Docker
-- Docker Compose
-
-### Start the project
-
-First build both applications:
+Build both services:
 
 ```bash
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
 ```
 
-Then start the full stack:
+Start the full stack:
 
 ```bash
 docker compose up -d --build
 ```
 
-To stop and remove containers:
+Check status:
+
+```bash
+docker compose ps
+```
+
+Stop the stack:
 
 ```bash
 docker compose down
 ```
 
-To reset the database volume and start from scratch:
+Reset database volume:
 
 ```bash
 docker compose down -v
 docker compose up -d --build
 ```
 
-## Environment configuration
+## Health endpoints
 
-The project uses a root `.env` file for Docker Compose variables.
+- `GET http://localhost:8080/health`
+- `GET http://localhost:8081/health`
 
-Example variables:
-
-```env
-POSTGRES_USER=appuser
-POSTGRES_PASSWORD=apppassword
-JWT_SECRET=change-me-in-env
-INTERNAL_TOKEN=change-me-in-env
-```
-
-These values are injected into containers by `docker-compose.yml`.
-
-## Health checks
-
-After startup, both services should be available:
-
-- `GET http://localhost:8080/health` → `auth-api`
-- `GET http://localhost:8081/health` → `data-api`
-
-Example responses:
+Expected responses:
 
 ```json
 {
@@ -133,54 +83,31 @@ Example responses:
 
 ```json
 {
-  "status": "ok",
-  "service": "data-api"
+  "service": "data-api",
+  "status": "ok"
 }
 ```
 
-## Authentication flow
-
-`auth-api` provides public authentication endpoints and a protected processing endpoint.
-
-Implemented behavior:
-
-- user registration;
-- user login;
-- JWT generation and validation;
-- forwarding authenticated processing requests to `data-api`;
-- persistence of users and processing logs in PostgreSQL.
+## API flow
 
 ### Register
 
-`POST /api/auth/register`
-
-Request body:
+```text
+POST /api/auth/register
+```
 
 ```json
 {
   "email": "user@example.com",
   "password": "Pass12345!"
-}
-```
-
-Responses:
-
-- `201 Created` — user successfully created;
-- `409 Conflict` — user with the same email already exists.
-
-Example conflict response:
-
-```json
-{
-  "error": "User already exists"
 }
 ```
 
 ### Login
 
-`POST /api/auth/login`
-
-Request body:
+```text
+POST /api/auth/login
+```
 
 ```json
 {
@@ -189,7 +116,7 @@ Request body:
 }
 ```
 
-Successful response:
+Example response:
 
 ```json
 {
@@ -197,18 +124,12 @@ Successful response:
 }
 ```
 
-## Protected processing endpoint
-
-`POST /api/process`
-
-Headers:
+### Protected request
 
 ```text
+POST /api/process
 Authorization: Bearer <JWT>
-Content-Type: application/json
 ```
-
-Request body:
 
 ```json
 {
@@ -216,7 +137,7 @@ Request body:
 }
 ```
 
-Successful response:
+Example response:
 
 ```json
 {
@@ -224,47 +145,24 @@ Successful response:
 }
 ```
 
-## Internal data-api behavior
+## Database note
 
-`data-api` is intended for internal service-to-service communication.
+The local PostgreSQL schema is currently initialized automatically on startup through Hibernate with `spring.jpa.hibernate.ddl-auto=update`, which means schema changes are managed by Hibernate rather than versioned Flyway SQL migrations at this stage. This matches the current project state where application tables are created automatically and no Flyway schema history table is present.
 
-Direct external calls to its protected transformation endpoint without the internal token are rejected.
+## Next steps
 
-Example:
+- Introduce versioned Flyway SQL migrations under `src/main/resources/db/migration`.
+- Switch Hibernate schema management from `ddl-auto=update` to `validate` or `none` after migrations are in place.
+- Extend automated integration testing for the full Docker Compose flow.
 
-`POST /api/transform` without valid internal token → `403 Forbidden`
+## Useful commands
 
-## Database
-
-PostgreSQL is used for persistence in the full local flow.
-
-Current database objects created by the application include:
-
-- `users`
-- `processinglog`
-
-## Development workflow
-
-The project follows GitFlow conventions:
-
-- `main` — stable release history;
-- `develop` — integration branch;
-- `feature/*` — implementation branches;
-- `release/*` — release stabilization branches;
-- `hotfix/*` — urgent fixes.
-
-All changes should go through Pull Requests with green Maven tests and CI.
-
-## Changelog and releases
-
-User-facing changes are tracked in [CHANGELOG.md](./CHANGELOG.md).
-
-Pre-release tags such as `v0.1.0-rc1` may be used to mark release candidates. Each release should be associated with:
-
-- a Git tag;
-- a changelog entry;
-- a passing CI build.
+```bash
+docker compose logs auth-api --tail 200
+docker compose logs data-api --tail 200
+docker compose logs -f auth-api
+```
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
