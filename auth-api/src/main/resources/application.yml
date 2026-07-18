@@ -1,8 +1,10 @@
 spring:
+  application:
+    name: auth-api
   datasource:
-    url: 
-    username: 
-    password: 
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/appdb}
+    username: ${SPRING_DATASOURCE_USERNAME:appuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:apppassword}
   jpa:
     hibernate:
       ddl-auto: update
@@ -10,6 +12,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    show-sql: true
   jackson:
     serialization:
       INDENT_OUTPUT: true
@@ -17,4 +20,14 @@ spring:
 server:
   port: 8080
 
-data-api:\n  base-url: http://localhost:8081\n  internal-token: test-internal-token\njwt:\n  secret: ZmFrZS1iYXNlNjQtc2VjcmV0LWtleS0xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=
+data-api:
+  base-url: ${DATA_API_BASE_URL:http://localhost:8081}
+  internal-token: ${INTERNAL_TOKEN:change-me-in-env}
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-env}
+
+logging:
+  level:
+    org.springframework.security: TRACE
+

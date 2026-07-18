@@ -21,4 +21,5 @@ Thumbs.db
 logs/
 
 # Java
-*.class
+*.classscripts/debug-auth-security.ps1
+auth-api/src/main/resources/application.yml.bak
