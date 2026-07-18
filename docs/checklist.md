@@ -16,5 +16,5 @@
 - [x] Create `main` and `develop`
 - [x] Add base repository structure
 - [x] Add initial service folders
-- [ ] Add GitHub Actions workflow
-- [ ] Fill core documentation
+- [x] Add GitHub Actions workflow
+- [x] Fill core documentation
