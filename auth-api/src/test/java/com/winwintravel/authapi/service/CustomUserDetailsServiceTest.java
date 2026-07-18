@@ -11,7 +11,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +44,9 @@ class CustomUserDetailsServiceTest {
     void loadUserByUsernameShouldThrowWhenUserNotFound() {
         when(userRepository.findByEmail("missing@a.com")).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class,
+        UsernameNotFoundException ex = assertThrows(UsernameNotFoundException.class,
                 () -> customUserDetailsService.loadUserByUsername("missing@a.com"));
+
+        assertEquals("User not found: missing@a.com", ex.getMessage());
     }
 }

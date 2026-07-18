@@ -16,7 +16,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -51,6 +53,7 @@ class AuthServiceTest {
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
+        verify(passwordEncoder).encode("pass");
 
         User savedUser = userCaptor.getValue();
         assertEquals("a@a.com", savedUser.getEmail());
@@ -70,6 +73,7 @@ class AuthServiceTest {
 
         assertEquals("User already exists", ex.getMessage());
         verify(userRepository, never()).save(any());
+        verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
@@ -85,6 +89,7 @@ class AuthServiceTest {
         verify(authenticationManager).authenticate(
                 any(UsernamePasswordAuthenticationToken.class)
         );
+        verify(jwtService).generateToken("a@a.com");
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
     }
