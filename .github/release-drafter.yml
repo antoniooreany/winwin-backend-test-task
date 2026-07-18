@@ -1,10 +1,13 @@
-name-template: 'v'
-tag-template: 'v'
-change-template: '-  (#)'
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
 template: |
   ## Changes
 
-  
+  $CHANGES
+
+change-template: '- $TITLE (#$NUMBER)'
+no-changes-template: '- No user-facing changes in this draft release.'
 
 categories:
   - title: 'Features'
@@ -42,7 +45,9 @@ version-resolver:
     labels:
       - 'fix'
       - 'bug'
+      - 'documentation'
       - 'docs'
       - 'test'
       - 'chore'
+      - 'ci'
   default: patch
