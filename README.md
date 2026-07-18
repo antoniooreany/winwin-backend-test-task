@@ -1,5 +1,11 @@
-# Git Flow Repository
+# WinWin Backend Test Task
 
-This repository is using git-flow with the following branches:
-- main: Production releases
-- develop: Development
+Test task implementation for the Backend Engineer position at WinWin.travel.
+
+## Planned structure
+
+- auth-api
+- data-api
+- postgres
+- docker-compose
+- GitHub Actions CI
