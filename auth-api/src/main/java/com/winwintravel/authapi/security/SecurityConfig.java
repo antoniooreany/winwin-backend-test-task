@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -52,3 +53,4 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 }
+

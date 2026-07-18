@@ -4,6 +4,7 @@ import com.winwintravel.authapi.auth.JwtService;
 import com.winwintravel.authapi.auth.dto.AuthResponse;
 import com.winwintravel.authapi.auth.dto.LoginRequest;
 import com.winwintravel.authapi.auth.dto.RegisterRequest;
+import com.winwintravel.authapi.exception.UserAlreadyExistsException;
 import com.winwintravel.authapi.repository.UserRepository;
 import com.winwintravel.authapi.user.User;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,7 +34,7 @@ public class AuthService {
 
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("User already exists");
+            throw new UserAlreadyExistsException("User already exists");
         }
 
         User user = new User();
