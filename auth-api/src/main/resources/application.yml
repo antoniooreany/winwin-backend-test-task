@@ -16,3 +16,5 @@ spring:
 
 server:
   port: 8080
+
+data-api:\n  base-url: http://localhost:8081\n  internal-token: test-internal-token\njwt:\n  secret: ZmFrZS1iYXNlNjQtc2VjcmV0LWtleS0xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=
