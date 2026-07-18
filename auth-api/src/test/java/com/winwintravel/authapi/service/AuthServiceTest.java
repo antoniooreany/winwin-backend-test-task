@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import com.winwintravel.authapi.exception.UserAlreadyExistsException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -68,7 +69,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail("a@a.com")).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        UserAlreadyExistsException ex = assertThrows(UserAlreadyExistsException.class,
                 () -> authService.register(request));
 
         assertEquals("User already exists", ex.getMessage());
@@ -94,3 +95,4 @@ class AuthServiceTest {
         assertEquals("jwt-token", response.getToken());
     }
 }
+
