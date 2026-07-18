@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - release/**
+  pull_request:
+
+jobs:
+  verify-structure:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Verify repository structure
+        run: |
+          ls -la
+          test -d auth-api
+          test -d data-api
+          test -d docs
+          test -d .github/workflows
+          test -f README.md
+          test -f .gitignore
+          test -f .editorconfig
+          test -f .env.example
