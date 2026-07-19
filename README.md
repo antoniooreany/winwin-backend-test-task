@@ -145,6 +145,26 @@ Example response:
 }
 ```
 
+## Smoke test
+
+A lightweight end-to-end smoke test can be run from the repository root after adding the PowerShell script:
+
+```powershell
+pwsh ./scripts/smoke.ps1
+```
+
+The smoke test is expected to:
+
+- start the Docker Compose stack;
+- wait until both services are healthy;
+- register a test user;
+- log in and obtain a JWT token;
+- call the protected `/api/process` endpoint with the token;
+- verify that the same endpoint rejects a request without JWT;
+- stop the Docker Compose stack and print a final PASS/FAIL summary.
+
+This script is intended as a fast verification step after local changes, merges, or cleanup work.
+
 ## Database note
 
 The local PostgreSQL schema is currently initialized automatically on startup through Hibernate with `spring.jpa.hibernate.ddl-auto=update`, which means schema changes are managed by Hibernate rather than versioned Flyway SQL migrations at this stage. This matches the current project state where application tables are created automatically and no Flyway schema history table is present.
