@@ -5,47 +5,47 @@ Thanks for your interest in contributing to the WinWin Backend Test Task reposit
 This project is intentionally kept small and focused. Contributions should aim
 to improve clarity, correctness, or test coverage without overengineering.
 
-## Branching model
+## Branching Model
 
 The repository follows a GitFlow-style branching strategy:
 
-- \main\ — stable releases
-- \develop\ — integration branch
-- \eature/*\ — new features or refactorings
-- \elease/*\ — release stabilization
-- \hotfix/*\ — urgent fixes on top of production
+- `main` — stable releases
+- `develop` — integration branch
+- `feature/*` — new features or refactorings
+- `release/*` — release stabilization
+- `hotfix/*` — urgent fixes on top of production
 
-## Contribution steps
+## Contribution Steps
 
-1. Create a feature branch from \develop\, for example:
-   - \eature/my-improvement\
+1. Create a feature branch from `develop`, for example:
+   - `feature/my-improvement`
 2. Implement the change and add or update tests.
 3. Ensure the build is green locally:
 
-   \\\ash
+   ```bash
    mvn -f auth-api/pom.xml clean test
    mvn -f data-api/pom.xml clean test
-   \\\
+   ```
 
 4. Push your feature branch to GitHub.
-5. Open a Pull Request into \develop\.
+5. Open a Pull Request into `develop`.
 6. Make sure the PR description explains:
    - what was changed,
    - why it was changed,
    - how it was tested.
 
-## Code style and tests
+## Code Style and Tests
 
 - Prefer clear, explicit code over “clever” solutions.
 - Every new behavior should be covered by tests (unit or integration).
 - Do not introduce new external dependencies without a clear need.
 
-## Commit messages
+## Commit Messages
 
-- Use concise, descriptive messages (e.g. \eat:\, \ix:\, \	est:\, \chore:\).
+- Use concise, descriptive messages (e.g. `feat:`, `fix:`, `test:`, `chore:`).
 - Group related changes into a single commit when possible.
 
-## Reporting issues
+## Reporting Issues
 
 If you find a bug or inconsistency:
 
@@ -54,4 +54,3 @@ If you find a bug or inconsistency:
    - steps to reproduce,
    - expected vs actual behavior,
    - environment details (Java version, OS, etc.).
-

@@ -1,12 +1,12 @@
 # Security Policy
 
-## Supported versions
+## Supported Versions
 
 This repository is a coding exercise and reference implementation, not a
 production-grade service. There is no formal support window, but security
 issues are still taken seriously.
 
-## Reporting a vulnerability
+## Reporting a Vulnerability
 
 If you believe you have found a security issue:
 
@@ -27,9 +27,8 @@ effort will be made to address it in a timely manner.
 
 The primary scope is the sample code in:
 
-- \uth-api\
-- \data-api\
+- `auth-api`
+- `data-api`
 
 Infrastructure, deployment scripts, and external services are considered
 out of scope for this exercise repository.
-
