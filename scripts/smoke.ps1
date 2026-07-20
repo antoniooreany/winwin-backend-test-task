@@ -13,6 +13,7 @@ $TestPassword = "Password123!"
 
 $Passed = 0
 $Failed = 0
+$KeepContainersOnFailure = $true
 
 function Pass($msg) {
   $script:Passed++
@@ -45,6 +46,7 @@ function Wait-HttpOk($url, $name, $timeoutSec = 90) {
       Start-Sleep -Seconds 2
     }
   }
+
   Fail "$name health did not become UP within $timeoutSec sec"
   return $false
 }
@@ -145,10 +147,6 @@ catch {
   Write-Host "`nSmoke test terminated with error: $($_.Exception.Message)" -ForegroundColor Red
 }
 finally {
-  Step "Docker Compose shutdown"
-  docker compose down | Out-Null
-  Pass "Docker Compose stopped"
-
   Write-Host "`n==============================" -ForegroundColor White
   Write-Host "Smoke Test Summary" -ForegroundColor White
   Write-Host "Passed: $Passed" -ForegroundColor Green
@@ -156,8 +154,32 @@ finally {
 
   if ($Failed -eq 0) {
     Write-Host "RESULT: PASS" -ForegroundColor Green
-  } else {
+
+    Step "Docker Compose shutdown"
+    docker compose down | Out-Null
+    Pass "Docker Compose stopped"
+  }
+  else {
+    if ($KeepContainersOnFailure) {
+      Step "Docker Compose preserved for debugging"
+      Write-Host "Containers were left running because the smoke test failed." -ForegroundColor Yellow
+      Write-Host "Use the commands below to inspect the failure:" -ForegroundColor Yellow
+      Write-Host "  docker compose ps" -ForegroundColor Yellow
+      Write-Host "  docker compose logs --tail=200 auth-api" -ForegroundColor Yellow
+      Write-Host "  docker compose logs --tail=200 data-api" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8080/actuator/health" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8081/actuator/health" -ForegroundColor Yellow
+      Write-Host "When finished, clean up manually with:" -ForegroundColor Yellow
+      Write-Host "  docker compose down -v" -ForegroundColor Yellow
+    }
+    else {
+      Step "Docker Compose shutdown"
+      docker compose down | Out-Null
+      Pass "Docker Compose stopped"
+    }
+
     Write-Host "RESULT: FAIL" -ForegroundColor Red
   }
+
   Write-Host "==============================" -ForegroundColor White
 }

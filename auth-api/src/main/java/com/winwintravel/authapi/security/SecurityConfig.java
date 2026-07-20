@@ -3,6 +3,7 @@ package com.winwintravel.authapi.security;
 import com.winwintravel.authapi.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,6 +35,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
@@ -53,4 +55,3 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 }
-
