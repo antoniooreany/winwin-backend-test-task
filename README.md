@@ -1,6 +1,18 @@
 # WinWin Backend Test Task
 
-Backend test task implementation for WinWin.travel.
+Backend take-home assignment implementation for WinWin.travel.
+
+## Project Context
+
+This repository contains my solution for a backend engineering test task.
+
+The project includes:
+- `auth-api` — registration, login, JWT-based authentication, protected processing endpoint, and PostgreSQL persistence.
+- `data-api` — internal text transformation service protected by a shared internal token.
+- `postgres` — persistence layer for users and processing logs.
+- `docker-compose.yml` — local orchestration for both services and PostgreSQL.
+
+The goal is to provide a minimal but clear implementation of authentication, internal service-to-service communication, deterministic database startup, and Docker-based local execution.
 
 ## Overview
 
@@ -10,14 +22,11 @@ The project contains two Spring Boot services running locally with Docker Compos
 - `data-api` — internal service used by `auth-api` for text transformation.
 - `postgres` — persistence layer for users and processing logs.
 
-The goal is to provide a minimal but clear implementation of authentication, internal service-to-service communication, and Docker-based local startup.
-
 ## Architecture
 
 ### auth-api
 
 Responsibilities:
-
 - register users;
 - authenticate users and issue JWT tokens;
 - expose a protected `POST /api/process` endpoint;
@@ -27,7 +36,6 @@ Responsibilities:
 ### data-api
 
 Responsibilities:
-
 - expose the transformation endpoint used by `auth-api`;
 - validate the shared internal token header;
 - process incoming text and return the transformed value.
@@ -35,7 +43,6 @@ Responsibilities:
 ### postgres
 
 Stores:
-
 - `users`
 - `processing_log`
 
@@ -48,6 +55,7 @@ Stores:
 - Maven
 - PostgreSQL
 - Docker Compose
+- Flyway
 
 ## Project Structure
 
@@ -56,6 +64,7 @@ Stores:
 ├── auth-api
 ├── data-api
 ├── docker-compose.yml
+├── scripts
 └── README.md
 ```
 
@@ -90,6 +99,8 @@ Reset the database volume and start from a clean state:
 
 ```bash
 docker compose down -v
+mvn -f auth-api/pom.xml clean package -DskipTests
+mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
@@ -135,13 +146,12 @@ Example request:
 
 ```json
 {
-  "email": VALID_EMAIL,
+  "email": "user@example.com",
   "password": "Pass12345!"
 }
 ```
 
 Expected behavior:
-
 - creates a new user;
 - stores the password in hashed form.
 
@@ -156,7 +166,7 @@ Example request:
 
 ```json
 {
-  "email": VALID_EMAIL,
+  "email": "user@example.com",
   "password": "Pass12345!"
 }
 ```
@@ -181,7 +191,7 @@ Example request:
 
 ```json
 {
-  "text": VALID_TEXT
+  "text": "hello"
 }
 ```
 
@@ -189,12 +199,11 @@ Example response:
 
 ```json
 {
-  "result": VALID_TEXT
+  "result": "transformed text"
 }
 ```
 
 Expected behavior:
-
 - validates the JWT in `auth-api`;
 - forwards the request to `data-api` using the internal token header;
 - returns the transformed result to the client;
@@ -207,7 +216,7 @@ Expected behavior:
 ```bash
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":VALID_EMAIL,"password":"Pass12345!"}'
+  -d '{"email":"user@example.com","password":"Pass12345!"}'
 ```
 
 ### 2. Log in
@@ -215,7 +224,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":VALID_EMAIL,"password":"Pass12345!"}'
+  -d '{"email":"user@example.com","password":"Pass12345!"}'
 ```
 
 Save the returned JWT token.
@@ -226,11 +235,10 @@ Save the returned JWT token.
 curl -X POST http://localhost:8080/api/process \
   -H "Authorization: Bearer <JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"text":VALID_TEXT}'
+  -d '{"text":"hello"}'
 ```
 
 Expected result:
-
 - transformed text is returned;
 - a new record is written to `processing_log`.
 
@@ -239,48 +247,53 @@ Expected result:
 ```bash
 curl -X POST http://localhost:8080/api/process \
   -H "Content-Type: application/json" \
-  -d '{"text":VALID_TEXT}'
+  -d '{"text":"hello"}'
 ```
 
 Expected result:
-
 - request is rejected because no JWT is provided.
+
+### 5. Verify direct access to data-api is rejected without the internal token
+
+```bash
+curl -X POST http://localhost:8081/api/transform \
+  -H "Content-Type: application/json" \
+  -d '{"text":"hello"}'
+```
+
+Expected result:
+- request is rejected with `403 Forbidden`.
 
 ## PowerShell Smoke Test
 
-If a PowerShell smoke script is included in the repository, it can be run from the project root like this:
+A PowerShell smoke script can be run from the project root like this:
 
 ```powershell
 pwsh ./scripts/smoke.ps1
 ```
 
-A typical smoke test should:
+The current smoke flow passes successfully with a full local Docker Compose startup and API verification.
 
+A typical smoke test should:
 - start the Docker Compose stack;
 - wait until both services are available;
 - register a test user;
 - log in and obtain a JWT token;
 - call the protected `/api/process` endpoint with the token;
 - verify that the same endpoint rejects a request without JWT;
+- verify that `data-api` rejects direct access without a valid internal token;
 - print a final PASS/FAIL summary.
 
 ## Database
 
-At the current stage, the PostgreSQL schema is initialized automatically on startup through Hibernate.
+The PostgreSQL schema is initialized through Flyway migrations.
 
 Current approach:
+- versioned SQL migrations live under `src/main/resources/db/migration`;
+- schema creation is deterministic and works on a clean database;
+- application startup does not rely only on ad hoc local database state.
 
-- schema creation is driven by JPA/Hibernate;
-- tables are created automatically during application startup;
-- no versioned Flyway SQL migrations are required for the basic working version.
-
-This keeps the solution simple, which matches the scope of the test task.
-
-## Planned Improvements
-
-- add versioned Flyway SQL migrations under `src/main/resources/db/migration`;
-- switch Hibernate schema management from `ddl-auto=update` to `validate` or `none`;
-- add stronger end-to-end integration coverage for the full Docker Compose flow.
+This keeps local startup reproducible and easier to verify.
 
 ## Useful Commands
 
@@ -299,24 +312,24 @@ docker compose logs -f auth-api
 docker compose logs -f data-api
 ```
 
-Restart the stack:
+Restart the stack from scratch:
 
 ```bash
-docker compose down
+docker compose down -v
+mvn -f auth-api/pom.xml clean package -DskipTests
+mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
 ## Notes
 
 - `data-api` is intended for internal use only and should accept requests only when the shared `X-Internal-Token` header is valid.
-- passwords must be stored in hashed form;
-- secrets and tokens should not be logged;
+- passwords must be stored in hashed form.
+- secrets and tokens should not be logged.
 - the solution intentionally keeps the architecture simple and focused on the task requirements.
+- `spotless:check` may fail in this environment due to a `google-java-format` and JDK compatibility issue, so formatting was applied with IDE tooling.
 
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE).
-## Notes
 
-- spotless:check currently fails in this environment due to a google-java-format and JDK compatibility issue.
-- Code formatting was therefore applied using IDE formatting tools.
