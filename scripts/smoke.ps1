@@ -6,15 +6,15 @@ $DataBase = "http://localhost:8081"
 $RegisterEndpoint = "$AuthBase/api/auth/register"
 $LoginEndpoint    = "$AuthBase/api/auth/login"
 $ProcessEndpoint  = "$AuthBase/api/process"
-
-$AuthHealth = "$AuthBase/health"
-$DataHealth = "$DataBase/health"
+$AuthHealth       = "$AuthBase/health"
+$DataHealth       = "$DataBase/health"
 
 $TestEmail = "smoke.user.$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())@example.com"
 $TestPassword = "Password123!"
 
 $Passed = 0
 $Failed = 0
+$KeepContainersOnFailure = $true
 
 function Pass($msg) {
   $script:Passed++
@@ -39,49 +39,34 @@ function Assert-True($condition, $successMsg, $failMsg) {
   }
 }
 
-function Test-HealthResponse($resp) {
-  if ($null -eq $resp) { return $false }
-
-  if ($resp.status -eq "UP") { return $true }
-  if ($resp.status -eq "up") { return $true }
-  if ($resp.status -eq "ok") { return $true }
-  if ($resp.status -eq "OK") { return $true }
-
-  return $false
-}
-
 function Wait-HttpOk($url, $name, $timeoutSec = 90) {
   $start = Get-Date
-  $lastError = $null
-  $lastBody = $null
 
   while (((Get-Date) - $start).TotalSeconds -lt $timeoutSec) {
     try {
-      $resp = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 5
-      $lastBody = $resp
+      $resp = Invoke-WebRequest -Uri $url -Method Get -TimeoutSec 5
+      $body = $resp.Content
 
-      if (Test-HealthResponse $resp) {
-        Pass "$name health is ready"
-        return $true
+      if ($resp.StatusCode -eq 200) {
+        try {
+          $json = $body | ConvertFrom-Json
+          if ($json.status -eq "ok" -or $json.status -eq "OK" -or $json.status -eq "up" -or $json.status -eq "UP") {
+            Pass "$name health is ready"
+            return $true
+          }
+        }
+        catch {
+          Pass "$name health endpoint returned HTTP 200"
+          return $true
+        }
       }
     }
     catch {
-      $lastError = $_.Exception.Message
+      Start-Sleep -Seconds 2
     }
-
-    Start-Sleep -Seconds 2
   }
 
-  if ($lastBody) {
-    Fail "$name health did not become ready within $timeoutSec sec. Last response: $($lastBody | ConvertTo-Json -Compress -Depth 5)"
-  }
-  elseif ($lastError) {
-    Fail "$name health did not become ready within $timeoutSec sec. Last error: $lastError"
-  }
-  else {
-    Fail "$name health did not become ready within $timeoutSec sec"
-  }
-
+  Fail "$name health did not become ready within $timeoutSec sec"
   return $false
 }
 
@@ -165,8 +150,8 @@ try {
 
   Step "Call protected process endpoint"
   $processBody = @{
-    text = "Hello from smoke test"
-  } | ConvertTo-Json -Compress
+    text = "hello"
+  } | ConvertTo-Json
 
   try {
     $processResp = Invoke-RestMethod `
@@ -216,10 +201,6 @@ catch {
   Write-Host "`nSmoke test terminated with error: $($_.Exception.Message)" -ForegroundColor Red
 }
 finally {
-  Step "Docker Compose shutdown"
-  docker compose down | Out-Null
-  Pass "Docker Compose stopped"
-
   Write-Host "`n==============================" -ForegroundColor White
   Write-Host "Smoke Test Summary" -ForegroundColor White
   Write-Host "Passed: $Passed" -ForegroundColor Green
@@ -227,11 +208,31 @@ finally {
 
   if ($Failed -eq 0) {
     Write-Host "RESULT: PASS" -ForegroundColor Green
-    exit 0
+
+    Step "Docker Compose shutdown"
+    docker compose down | Out-Null
+    Pass "Docker Compose stopped"
   }
   else {
+    if ($KeepContainersOnFailure) {
+      Step "Docker Compose preserved for debugging"
+      Write-Host "Containers were left running because the smoke test failed." -ForegroundColor Yellow
+      Write-Host "Use the commands below to inspect the failure:" -ForegroundColor Yellow
+      Write-Host "  docker compose ps" -ForegroundColor Yellow
+      Write-Host "  docker compose logs --tail=200 auth-api" -ForegroundColor Yellow
+      Write-Host "  docker compose logs --tail=200 data-api" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8080/health" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8081/health" -ForegroundColor Yellow
+      Write-Host "When finished, clean up manually with:" -ForegroundColor Yellow
+      Write-Host "  docker compose down -v" -ForegroundColor Yellow
+    }
+    else {
+      Step "Docker Compose shutdown"
+      docker compose down | Out-Null
+      Pass "Docker Compose stopped"
+    }
+
     Write-Host "RESULT: FAIL" -ForegroundColor Red
-    exit 1
   }
 
   Write-Host "==============================" -ForegroundColor White

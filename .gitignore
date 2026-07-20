@@ -27,4 +27,7 @@ logs/
 scripts/debug-auth-security.ps1
 
 # Backup files
+auth-api/src/main/resources/application.yml.bak
+conversation-exports/
+*.tmp
 *.bak
