@@ -1,13 +1,11 @@
 package com.winwintravel.authapi.auth;
 
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JwtServiceTest {
 
@@ -16,16 +14,12 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         jwtService = new JwtService();
-        ReflectionTestUtils.setField(
-                jwtService,
-                "secret",
-                "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
-        );
+        ReflectionTestUtils.setField(jwtService, "secret", "ZmFrZS1iYXNlNjQtc2VjcmV0LWtleS0xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=");
     }
 
     @Test
     void shouldGenerateToken() {
-        String token = jwtService.generateToken("a@a.com");
+        String token = jwtService.generateToken("anton@example.com");
 
         assertNotNull(token);
         assertFalse(token.isBlank());
@@ -33,28 +27,33 @@ class JwtServiceTest {
 
     @Test
     void shouldExtractUsernameImmediatelyAfterGeneration() {
-        String token = jwtService.generateToken("a@a.com");
+        String token = jwtService.generateToken("anton@example.com");
 
         String username = jwtService.extractUsername(token);
 
-        assertEquals("a@a.com", username);
+        assertEquals("anton@example.com", username);
     }
 
     @Test
     void shouldValidateTokenForMatchingUsername() {
-        String token = jwtService.generateToken("a@a.com");
+        String token = jwtService.generateToken("anton@example.com");
 
-        boolean valid = jwtService.isTokenValid(token, "a@a.com");
+        boolean valid = jwtService.isTokenValid(token, "anton@example.com");
 
         assertTrue(valid);
     }
 
     @Test
     void shouldInvalidateTokenForDifferentUsername() {
-        String token = jwtService.generateToken("a@a.com");
+        String token = jwtService.generateToken("anton@example.com");
 
-        boolean valid = jwtService.isTokenValid(token, "b@b.com");
+        boolean valid = jwtService.isTokenValid(token, "other@example.com");
 
         assertFalse(valid);
+    }
+
+    @Test
+    void shouldThrowForMalformedToken() {
+        assertThrows(JwtException.class, () -> jwtService.extractUsername("not-a-jwt-token"));
     }
 }

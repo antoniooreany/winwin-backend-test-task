@@ -2,84 +2,187 @@
 
 Backend test task implementation for WinWin.travel.
 
-## Overview
+## What is included
 
-This repository contains two Spring Boot services:
+The project consists of two Spring Boot services:
 
-- `auth-api` — authentication service with JWT-based auth logic
-- `data-api` — internal data service used by `auth-api`
+- `auth-api` — handles registration, login, JWT authentication, and protected requests.
+- `data-api` — internal service used by `auth-api` for text transformation.
 
-The project is developed with a GitFlow-style branching model and validated through Maven test runs and GitHub Actions CI.
+The application runs locally with Docker Compose and PostgreSQL.
 
-## Current status
-
-At the current stage:
-
-- both modules build successfully;
-- `auth-api` and `data-api` pass Maven tests;
-- JWT authentication flow is implemented and covered by tests;
-- documentation and release preparation are in progress.
-
-## Repository structure
-
-```text
-.
-├── auth-api
-├── data-api
-├── docs
-└── .github/workflows
-```
-
-## Stack
+## Tech stack
 
 - Java 21
-- Spring Boot
+- Spring Boot 4.x
 - Spring Security
+- Spring Data JPA
 - Maven
-- JUnit 5
-- PostgreSQL (planned/full flow)
-- Docker / Docker Compose (planned/full flow)
+- PostgreSQL
+- Docker Compose
 - GitHub Actions
 
-## Build and test
+## Current state
 
-Run tests for each module separately:
+Implemented and verified:
+
+- build and tests for both modules;
+- working Docker Compose setup;
+- PostgreSQL integration;
+- user registration and login;
+- JWT-protected endpoint flow;
+- internal service-to-service call from `auth-api` to `data-api`.
+
+## Run locally
+
+Build both services:
 
 ```bash
-mvn -f auth-api/pom.xml clean test
-mvn -f data-api/pom.xml test
+mvn -f auth-api/pom.xml clean package -DskipTests
+mvn -f data-api/pom.xml clean package -DskipTests
 ```
 
-## Authentication
+Start the full stack:
 
-`auth-api` contains JWT-related authentication logic.
+```bash
+docker compose up -d --build
+```
 
-Implemented at this stage:
+Check status:
 
-- token generation;
-- username extraction from token;
-- token validation;
-- focused unit tests for JWT service behavior.
+```bash
+docker compose ps
+```
 
-## Planned next steps
+Stop the stack:
 
-- implement protected `/api/process`;
-- add internal call from `auth-api` to `data-api`;
-- add persistence for processing logs and full Postgres-backed flow;
-- add Dockerfiles and `docker-compose.yml`;
-- finalize end-to-end smoke test and release.
+```bash
+docker compose down
+```
 
-## Development workflow
+Reset database volume:
 
-The project follows GitFlow conventions:
+```bash
+docker compose down -v
+docker compose up -d --build
+```
 
-- `main` — stable release history
-- `develop` — integration branch
-- `feature/*` — implementation branches
-- `release/*` — release stabilization branches
-- `hotfix/*` — urgent fixes
+## Health endpoints
 
-## Notes
+- `GET http://localhost:8080/health`
+- `GET http://localhost:8081/health`
 
-This repository intentionally avoids overengineering.
-The goal is to provide a clean, understandable, and incrementally deliverable backend solution.
+Expected responses:
+
+```json
+{
+  "status": "ok",
+  "service": "auth-api"
+}
+```
+
+```json
+{
+  "service": "data-api",
+  "status": "ok"
+}
+```
+
+## API flow
+
+### Register
+
+```text
+POST /api/auth/register
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "Pass12345!"
+}
+```
+
+### Login
+
+```text
+POST /api/auth/login
+```
+
+```json
+{
+  "email": "user@example.com",
+  "password": "Pass12345!"
+}
+```
+
+Example response:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+### Protected request
+
+```text
+POST /api/process
+Authorization: Bearer <JWT>
+```
+
+```json
+{
+  "text": "hello"
+}
+```
+
+Example response:
+
+```json
+{
+  "result": "HELLO"
+}
+```
+
+## Smoke test
+
+A lightweight end-to-end smoke test can be run from the repository root after adding the PowerShell script:
+
+```powershell
+pwsh ./scripts/smoke.ps1
+```
+
+The smoke test is expected to:
+
+- start the Docker Compose stack;
+- wait until both services are healthy;
+- register a test user;
+- log in and obtain a JWT token;
+- call the protected `/api/process` endpoint with the token;
+- verify that the same endpoint rejects a request without JWT;
+- stop the Docker Compose stack and print a final PASS/FAIL summary.
+
+This script is intended as a fast verification step after local changes, merges, or cleanup work.
+
+## Database note
+
+The local PostgreSQL schema is currently initialized automatically on startup through Hibernate with `spring.jpa.hibernate.ddl-auto=update`, which means schema changes are managed by Hibernate rather than versioned Flyway SQL migrations at this stage. This matches the current project state where application tables are created automatically and no Flyway schema history table is present.
+
+## Next steps
+
+- Introduce versioned Flyway SQL migrations under `src/main/resources/db/migration`.
+- Switch Hibernate schema management from `ddl-auto=update` to `validate` or `none` after migrations are in place.
+- Extend automated integration testing for the full Docker Compose flow.
+
+## Useful commands
+
+```bash
+docker compose logs auth-api --tail 200
+docker compose logs data-api --tail 200
+docker compose logs -f auth-api
+```
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
