@@ -9,12 +9,14 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api")
 public class TransformController {
 
+    private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Token";
+
     @Value("${internal.token}")
     private String internalToken;
 
     @PostMapping("/transform")
     public TransformResponse transform(
-            @RequestHeader(value = "X-Internal-Token", required = false) String headerToken,
+            @RequestHeader(value = INTERNAL_TOKEN_HEADER, required = false) String headerToken,
             @RequestBody TransformRequest request
     ) {
         if (headerToken == null || !headerToken.equals(internalToken)) {
