@@ -27,8 +27,8 @@ effort will be made to address it in a timely manner.
 
 The primary scope is the sample code in:
 
-- \uth-api\
-- \data-api\
+- `auth-api`
+- `data-api`
 
 Infrastructure, deployment scripts, and external services are considered
 out of scope for this exercise repository.
