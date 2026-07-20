@@ -20,6 +20,11 @@ Thumbs.db
 *.log
 logs/
 
-# Java
-*.classscripts/debug-auth-security.ps1
-auth-api/src/main/resources/application.yml.bak
+# Java / build artifacts
+*.class
+
+# Scripts
+scripts/debug-auth-security.ps1
+
+# Backup files
+*.bak
