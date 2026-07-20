@@ -12,6 +12,9 @@ public class DataApiClient {
     private final RestClient restClient;
     private final String internalToken;
 
+    private static final String TRANSFORM_PATH = "/api/transform";
+    private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Token";
+
     public DataApiClient(
             @Value("${data-api.base-url}") String baseUrl,
             @Value("${data-api.internal-token}") String internalToken
@@ -27,8 +30,8 @@ public class DataApiClient {
 
         try {
             ProcessResponse response = restClient.post()
-                    .uri("/api/transform")
-                    .header("X-Internal-Token", internalToken)
+                    .uri(TRANSFORM_PATH)
+                    .header(INTERNAL_TOKEN_HEADER, internalToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
                     .body(request)
