@@ -1,20 +1,26 @@
 package com.winwintravel.authapi.process;
 
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProcessServiceTest {
+
+    private static final String VALID_EMAIL = "example@email.com";
+
+    private static final String VALID_TEXT = "hello";
 
     @Mock
     private DataApiClient dataApiClient;
@@ -22,40 +28,66 @@ class ProcessServiceTest {
     @Mock
     private ProcessingLogRepository processingLogRepository;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
     private ProcessService processService;
 
     @AfterEach
-    void clearSecurityContext() {
+    void tearDown() {
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    void shouldCallDataApiAndPersistLogForAuthenticatedUser() {
-        // given
-        var authentication = new UsernamePasswordAuthenticationToken("anton@example.com", "ignored");
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    void processText_shouldCallDataApi_andPersistProcessingLog_withAuthenticatedUser() {
+        ProcessRequest request = new ProcessRequest(VALID_TEXT);
 
-        when(dataApiClient.transform("hello")).thenReturn("HELLO");
+        when(dataApiClient.transform(VALID_TEXT)).thenReturn(VALID_TEXT);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(VALID_EMAIL);
 
-        ProcessRequest request = new ProcessRequest("hello");
+        SecurityContextHolder.setContext(securityContext);
 
-        // when
         ProcessResponse response = processService.processText(request);
 
-        // then
         assertNotNull(response);
-        assertEquals("HELLO", response.result());
+        assertEquals(VALID_TEXT, response.result());
 
-        verify(dataApiClient).transform("hello");
+        verify(dataApiClient).transform(VALID_TEXT);
 
         ArgumentCaptor<ProcessingLog> logCaptor = ArgumentCaptor.forClass(ProcessingLog.class);
         verify(processingLogRepository).save(logCaptor.capture());
 
         ProcessingLog savedLog = logCaptor.getValue();
-        assertEquals("anton@example.com", savedLog.getUserEmail());
-        assertEquals("hello", savedLog.getInputText());
-        assertEquals("HELLO", savedLog.getOutputText());
+        assertEquals(VALID_EMAIL, savedLog.getUserEmail());
+        assertEquals(VALID_TEXT, savedLog.getInputText());
+        assertEquals(VALID_TEXT, savedLog.getOutputText());
         assertNotNull(savedLog.getCreatedAt());
+    }
+
+    @Test
+    void processText_shouldPersistUnknownUser_whenAuthenticationIsMissing() {
+        ProcessRequest request = new ProcessRequest(VALID_TEXT);
+
+        when(dataApiClient.transform(VALID_TEXT)).thenReturn(VALID_TEXT);
+
+        SecurityContextHolder.clearContext();
+
+        ProcessResponse response = processService.processText(request);
+
+        assertNotNull(response);
+        assertEquals(VALID_TEXT, response.result());
+
+        ArgumentCaptor<ProcessingLog> logCaptor = ArgumentCaptor.forClass(ProcessingLog.class);
+        verify(processingLogRepository).save(logCaptor.capture());
+
+        ProcessingLog savedLog = logCaptor.getValue();
+        assertEquals("unknown", savedLog.getUserEmail());
+        assertEquals(VALID_TEXT, savedLog.getInputText());
+        assertEquals(VALID_TEXT, savedLog.getOutputText());
     }
 }

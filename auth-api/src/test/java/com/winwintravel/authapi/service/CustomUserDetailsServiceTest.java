@@ -1,23 +1,25 @@
 package com.winwintravel.authapi.service;
 
-import com.winwintravel.authapi.repository.UserRepository;
-import com.winwintravel.authapi.user.User;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import com.winwintravel.authapi.repository.UserRepository;
+import com.winwintravel.authapi.user.User;
 
 @ExtendWith(MockitoExtension.class)
 class CustomUserDetailsServiceTest {
+
+    private static final String VALID_EMAIL = "example@email.com";
 
     @Mock
     private UserRepository userRepository;
@@ -28,25 +30,25 @@ class CustomUserDetailsServiceTest {
     @Test
     void loadUserByUsernameShouldReturnUserDetails() {
         User user = new User();
-        user.setEmail("a@a.com");
+        user.setEmail(VALID_EMAIL);
         user.setPassword("encoded-pass");
 
-        when(userRepository.findByEmail("a@a.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(VALID_EMAIL)).thenReturn(Optional.of(user));
 
-        var userDetails = customUserDetailsService.loadUserByUsername("a@a.com");
+        var userDetails = customUserDetailsService.loadUserByUsername(VALID_EMAIL);
 
-        assertEquals("a@a.com", userDetails.getUsername());
+        assertEquals(VALID_EMAIL, userDetails.getUsername());
         assertEquals("encoded-pass", userDetails.getPassword());
         assertFalse(userDetails.getAuthorities().isEmpty());
     }
 
     @Test
     void loadUserByUsernameShouldThrowWhenUserNotFound() {
-        when(userRepository.findByEmail("missing@a.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(VALID_EMAIL)).thenReturn(Optional.empty());
 
         UsernameNotFoundException ex = assertThrows(UsernameNotFoundException.class,
-                () -> customUserDetailsService.loadUserByUsername("missing@a.com"));
+                () -> customUserDetailsService.loadUserByUsername(VALID_EMAIL));
 
-        assertEquals("User not found: missing@a.com", ex.getMessage());
+        assertEquals(String.format("User not found: %s", VALID_EMAIL), ex.getMessage());
     }
 }
