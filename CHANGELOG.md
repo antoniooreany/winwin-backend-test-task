@@ -9,11 +9,11 @@ and this project adheres informally to [Semantic Versioning](https://semver.org/
 
 ### Added
 
-- (reserved for future changes)
+- (reserved for future changes after 0.2.0)
 
 ### Changed
 
-- (reserved for future changes)
+- (reserved for future changes after 0.2.0)
 
 ## [0.2.0] - 2026-07-20
 
@@ -23,7 +23,7 @@ and this project adheres informally to [Semantic Versioning](https://semver.org/
 - Optional Flyway migrations for `users` and `processing_log` to support repeatable schema creation.
 - PowerShell smoke test flow covering register, login, protected processing, unauthorized access, and direct access rejection for `data-api`.
 - Repository housekeeping updates to prepare a clean submission package.
-- Improved project documentation (`README`, `CONTRIBUTING`, `SECURITY`) with clearer run instructions and smoke-test flow.
+- Improved project documentation (README, CONTRIBUTING, SECURITY) with clearer run instructions and smoke-test flow.
 
 ### Changed
 
@@ -32,7 +32,7 @@ and this project adheres informally to [Semantic Versioning](https://semver.org/
 - README updated with public-safe project context and deterministic startup guidance.
 - Normalized markdown formatting across repository documentation.
 - Smoke health checks aligned with the actual `/health` endpoints and `status: ok` responses.
-- Smoke request payload aligned with the current `/api/process` contract.
+- Smoke process payload aligned with the current `/api/process` contract.
 
 ### Known limitations
 

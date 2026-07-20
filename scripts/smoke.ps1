@@ -5,8 +5,8 @@ $DataBase = "http://localhost:8081"
 $RegisterEndpoint = "$AuthBase/api/auth/register"
 $LoginEndpoint    = "$AuthBase/api/auth/login"
 $ProcessEndpoint  = "$AuthBase/api/process"
-$AuthHealth       = "$AuthBase/actuator/health"
-$DataHealth       = "$DataBase/actuator/health"
+$AuthHealth       = "$AuthBase/health"
+$DataHealth       = "$DataBase/health"
 
 $TestEmail = "smoke.user.$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())@example.com"
 $TestPassword = "Password123!"
@@ -37,17 +37,27 @@ function Wait-HttpOk($url, $name, $timeoutSec = 90) {
   $start = Get-Date
   while (((Get-Date) - $start).TotalSeconds -lt $timeoutSec) {
     try {
-      $resp = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 5
-      if ($resp.status -eq "UP") {
-        Pass "$name health is UP"
-        return $true
+      $resp = Invoke-WebRequest -Uri $url -Method Get -TimeoutSec 5
+      $body = $resp.Content
+
+      if ($resp.StatusCode -eq 200) {
+        try {
+          $json = $body | ConvertFrom-Json
+          if ($json.status -eq "ok" -or $json.status -eq "UP") {
+            Pass "$name health is ready"
+            return $true
+          }
+        } catch {
+          Pass "$name health endpoint returned HTTP 200"
+          return $true
+        }
       }
     } catch {
       Start-Sleep -Seconds 2
     }
   }
 
-  Fail "$name health did not become UP within $timeoutSec sec"
+  Fail "$name health did not become ready within $timeoutSec sec"
   return $false
 }
 
@@ -112,7 +122,7 @@ try {
 
   Step "Call protected process endpoint"
   $processBody = @{
-    payload = "Hello from smoke test"
+    text = "hello"
   } | ConvertTo-Json
 
   try {
@@ -167,8 +177,8 @@ finally {
       Write-Host "  docker compose ps" -ForegroundColor Yellow
       Write-Host "  docker compose logs --tail=200 auth-api" -ForegroundColor Yellow
       Write-Host "  docker compose logs --tail=200 data-api" -ForegroundColor Yellow
-      Write-Host "  curl http://localhost:8080/actuator/health" -ForegroundColor Yellow
-      Write-Host "  curl http://localhost:8081/actuator/health" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8080/health" -ForegroundColor Yellow
+      Write-Host "  curl http://localhost:8081/health" -ForegroundColor Yellow
       Write-Host "When finished, clean up manually with:" -ForegroundColor Yellow
       Write-Host "  docker compose down -v" -ForegroundColor Yellow
     }
