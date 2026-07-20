@@ -1,84 +1,81 @@
 package com.winwintravel.dataapi.transform;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "internal.token=test-internal-token"
-)
 class TransformControllerTest {
 
-    @LocalServerPort
-    private int port;
+    private MockMvc mockMvc;
 
-    @Test
-    void shouldReturnTransformedTextForValidInternalToken() throws Exception {
-        HttpURLConnection connection = openConnection("{\"text\":\"hello\"}", "test-internal-token");
+    private static final String TRANSFORM_PATH = "/api/transform";
+    private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Token";
+    private static final String INTERNAL_TOKEN = "test-internal-token";
+    private static final String VALID_TEXT = "hello";
+    private static final String UPPERCASE_TEXT = "HELLO";
 
-        int status = connection.getResponseCode();
-        String body = readBody(connection);
-
-        assertEquals(200, status);
-        assertTrue(body.contains("\"result\":\"HELLO\""));
+    @BeforeEach
+    void setUp() {
+        TransformController controller = new TransformController();
+        ReflectionTestUtils.setField(controller, "internalToken", INTERNAL_TOKEN);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
-    void shouldReturnForbiddenWhenHeaderIsMissing() throws Exception {
-        HttpURLConnection connection = openConnection("{\"text\":\"hello\"}", null);
+    void transform_shouldReturnUppercaseResult_forValidInternalToken() throws Exception {
+        mockMvc.perform(post(TRANSFORM_PATH)
+                .contentType("application/json")
+                .header(INTERNAL_TOKEN_HEADER, INTERNAL_TOKEN)
+                .content("""
+                        {
+                          "text": "%s"
+                        }
+                        """.formatted(VALID_TEXT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value(UPPERCASE_TEXT));    }
 
-        int status = connection.getResponseCode();
-
-        assertEquals(403, status);
+    @Test
+    void transform_shouldReturnEmptyResult_whenTextIsNull() throws Exception {
+        mockMvc.perform(post(TRANSFORM_PATH)
+                .contentType("application/json")
+                .header(INTERNAL_TOKEN_HEADER, INTERNAL_TOKEN)
+                .content("""
+                                {
+                                  "text": null
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").value(""));
     }
 
     @Test
-    void shouldReturnForbiddenWhenHeaderIsInvalid() throws Exception {
-        HttpURLConnection connection = openConnection("{\"text\":\"hello\"}", "wrong-token");
-
-        int status = connection.getResponseCode();
-
-        assertEquals(403, status);
+    void transform_shouldReturnForbidden_whenInternalTokenIsMissing() throws Exception {
+        mockMvc.perform(post(TRANSFORM_PATH)
+                .contentType("application/json")
+                .content("""
+                        {
+                          "text": "%s"
+                        }
+                        """.formatted(VALID_TEXT)))
+                .andExpect(status().isForbidden());
     }
 
-    private HttpURLConnection openConnection(String jsonBody, String internalToken) throws Exception {
-        URI uri = URI.create("http://localhost:" + port + "/api/transform");
-        HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
-        if (internalToken != null) {
-            connection.setRequestProperty("X-Internal-Token", internalToken);
-        }
-        connection.setDoOutput(true);
-
-        try (OutputStream os = connection.getOutputStream()) {
-            os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
-        }
-
-        return connection;
-    }
-
-    private String readBody(HttpURLConnection connection) throws Exception {
-        InputStream stream = connection.getResponseCode() >= 400
-                ? connection.getErrorStream()
-                : connection.getInputStream();
-
-        if (stream == null) {
-            return "";
-        }
-
-        try (stream) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        }
+    @Test
+    void transform_shouldReturnForbidden_whenInternalTokenIsInvalid() throws Exception {
+        mockMvc.perform(post(TRANSFORM_PATH)
+                .contentType("application/json")
+                .header(INTERNAL_TOKEN_HEADER, "wrong-token")
+                .content("""
+                        {
+                          "text": "%s"
+                        }
+                        """.formatted(VALID_TEXT)))
+                .andExpect(status().isForbidden());
     }
 }
