@@ -135,7 +135,7 @@ Example request:
 
 ```json
 {
-  "email": "user@example.com",
+  "email": VALID_EMAIL,
   "password": "Pass12345!"
 }
 ```
@@ -156,7 +156,7 @@ Example request:
 
 ```json
 {
-  "email": "user@example.com",
+  "email": VALID_EMAIL,
   "password": "Pass12345!"
 }
 ```
@@ -181,7 +181,7 @@ Example request:
 
 ```json
 {
-  "text": "hello"
+  "text": VALID_TEXT
 }
 ```
 
@@ -189,7 +189,7 @@ Example response:
 
 ```json
 {
-  "result": "HELLO"
+  "result": VALID_TEXT
 }
 ```
 
@@ -207,7 +207,7 @@ Expected behavior:
 ```bash
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Pass12345!"}'
+  -d '{"email":VALID_EMAIL,"password":"Pass12345!"}'
 ```
 
 ### 2. Log in
@@ -215,7 +215,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Pass12345!"}'
+  -d '{"email":VALID_EMAIL,"password":"Pass12345!"}'
 ```
 
 Save the returned JWT token.
@@ -226,7 +226,7 @@ Save the returned JWT token.
 curl -X POST http://localhost:8080/api/process \
   -H "Authorization: Bearer <JWT>" \
   -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
+  -d '{"text":VALID_TEXT}'
 ```
 
 Expected result:
@@ -239,7 +239,7 @@ Expected result:
 ```bash
 curl -X POST http://localhost:8080/api/process \
   -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
+  -d '{"text":VALID_TEXT}'
 ```
 
 Expected result:
@@ -316,3 +316,7 @@ docker compose up -d --build
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+## Notes
+
+- spotless:check currently fails in this environment due to a google-java-format and JDK compatibility issue.
+- Code formatting was therefore applied using IDE formatting tools.
