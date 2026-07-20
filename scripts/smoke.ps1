@@ -2,11 +2,13 @@ $ErrorActionPreference = "Stop"
 
 $AuthBase = "http://localhost:8080"
 $DataBase = "http://localhost:8081"
+
 $RegisterEndpoint = "$AuthBase/api/auth/register"
 $LoginEndpoint    = "$AuthBase/api/auth/login"
 $ProcessEndpoint  = "$AuthBase/api/process"
-$AuthHealth       = "$AuthBase/actuator/health"
-$DataHealth       = "$DataBase/actuator/health"
+
+$AuthHealth = "$AuthBase/health"
+$DataHealth = "$DataBase/health"
 
 $TestEmail = "smoke.user.$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())@example.com"
 $TestPassword = "Password123!"
@@ -29,34 +31,75 @@ function Step($msg) {
 }
 
 function Assert-True($condition, $successMsg, $failMsg) {
-  if ($condition) { Pass $successMsg } else { Fail $failMsg }
+  if ($condition) {
+    Pass $successMsg
+  }
+  else {
+    Fail $failMsg
+  }
+}
+
+function Test-HealthResponse($resp) {
+  if ($null -eq $resp) { return $false }
+
+  if ($resp.status -eq "UP") { return $true }
+  if ($resp.status -eq "up") { return $true }
+  if ($resp.status -eq "ok") { return $true }
+  if ($resp.status -eq "OK") { return $true }
+
+  return $false
 }
 
 function Wait-HttpOk($url, $name, $timeoutSec = 90) {
   $start = Get-Date
+  $lastError = $null
+  $lastBody = $null
+
   while (((Get-Date) - $start).TotalSeconds -lt $timeoutSec) {
     try {
       $resp = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 5
-      if ($resp.status -eq "UP") {
-        Pass "$name health is UP"
+      $lastBody = $resp
+
+      if (Test-HealthResponse $resp) {
+        Pass "$name health is ready"
         return $true
       }
-    } catch {
-      Start-Sleep -Seconds 2
     }
+    catch {
+      $lastError = $_.Exception.Message
+    }
+
+    Start-Sleep -Seconds 2
   }
-  Fail "$name health did not become UP within $timeoutSec sec"
+
+  if ($lastBody) {
+    Fail "$name health did not become ready within $timeoutSec sec. Last response: $($lastBody | ConvertTo-Json -Compress -Depth 5)"
+  }
+  elseif ($lastError) {
+    Fail "$name health did not become ready within $timeoutSec sec. Last error: $lastError"
+  }
+  else {
+    Fail "$name health did not become ready within $timeoutSec sec"
+  }
+
   return $false
 }
 
 try {
   Step "Git sanity check"
-  git status
+  $gitStatus = git status --porcelain
   if ($LASTEXITCODE -ne 0) { throw "git status failed" }
-  Pass "Repository is accessible"
+
+  if ([string]::IsNullOrWhiteSpace(($gitStatus | Out-String))) {
+    Pass "Working tree is clean"
+  }
+  else {
+    Write-Host "[WARN] Working tree is not clean" -ForegroundColor Yellow
+    $gitStatus
+  }
 
   Step "Docker Compose reset"
-  docker compose down --remove-orphans | Out-Null
+  docker compose down -v --remove-orphans | Out-Null
   docker compose up --build -d
   if ($LASTEXITCODE -ne 0) { throw "docker compose up failed" }
   Pass "Docker Compose started"
@@ -71,28 +114,40 @@ try {
 
   Step "Register user"
   $registerBody = @{
-    email = $TestEmail
+    email    = $TestEmail
     password = $TestPassword
-  } | ConvertTo-Json
+  } | ConvertTo-Json -Compress
 
   try {
-    $registerResp = Invoke-RestMethod -Uri $RegisterEndpoint -Method Post -ContentType "application/json" -Body $registerBody -TimeoutSec 15
+    $registerResp = Invoke-RestMethod `
+      -Uri $RegisterEndpoint `
+      -Method Post `
+      -ContentType "application/json" `
+      -Body $registerBody `
+      -TimeoutSec 15
     Pass "User registration request succeeded"
-  } catch {
+  }
+  catch {
     Fail "User registration request failed: $($_.Exception.Message)"
     throw
   }
 
   Step "Login user"
   $loginBody = @{
-    email = $TestEmail
+    email    = $TestEmail
     password = $TestPassword
-  } | ConvertTo-Json
+  } | ConvertTo-Json -Compress
 
   try {
-    $loginResp = Invoke-RestMethod -Uri $LoginEndpoint -Method Post -ContentType "application/json" -Body $loginBody -TimeoutSec 15
+    $loginResp = Invoke-RestMethod `
+      -Uri $LoginEndpoint `
+      -Method Post `
+      -ContentType "application/json" `
+      -Body $loginBody `
+      -TimeoutSec 15
     Pass "Login request succeeded"
-  } catch {
+  }
+  catch {
     Fail "Login request failed: $($_.Exception.Message)"
     throw
   }
@@ -110,13 +165,20 @@ try {
 
   Step "Call protected process endpoint"
   $processBody = @{
-    payload = "Hello from smoke test"
-  } | ConvertTo-Json
+    text = "Hello from smoke test"
+  } | ConvertTo-Json -Compress
 
   try {
-    $processResp = Invoke-RestMethod -Uri $ProcessEndpoint -Method Post -ContentType "application/json" -Headers @{ Authorization = "Bearer $jwt" } -Body $processBody -TimeoutSec 20
+    $processResp = Invoke-RestMethod `
+      -Uri $ProcessEndpoint `
+      -Method Post `
+      -ContentType "application/json" `
+      -Headers @{ Authorization = "Bearer $jwt" } `
+      -Body $processBody `
+      -TimeoutSec 20
     Pass "Protected endpoint accepted JWT"
-  } catch {
+  }
+  catch {
     Fail "Protected endpoint failed with JWT: $($_.Exception.Message)"
     throw
   }
@@ -126,17 +188,26 @@ try {
 
   Step "Negative check without JWT"
   try {
-    Invoke-RestMethod -Uri $ProcessEndpoint -Method Post -ContentType "application/json" -Body $processBody -TimeoutSec 15 | Out-Null
+    Invoke-RestMethod `
+      -Uri $ProcessEndpoint `
+      -Method Post `
+      -ContentType "application/json" `
+      -Body $processBody `
+      -TimeoutSec 15 | Out-Null
+
     Fail "Protected endpoint unexpectedly allowed request without JWT"
-  } catch {
+  }
+  catch {
     $statusCode = $null
+
     if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
       $statusCode = [int]$_.Exception.Response.StatusCode
     }
 
     if ($statusCode -eq 401 -or $statusCode -eq 403) {
       Pass "Protected endpoint correctly rejected request without JWT ($statusCode)"
-    } else {
+    }
+    else {
       Fail "Protected endpoint rejected unauthenticated request with unexpected status: $statusCode"
     }
   }
@@ -156,8 +227,12 @@ finally {
 
   if ($Failed -eq 0) {
     Write-Host "RESULT: PASS" -ForegroundColor Green
-  } else {
-    Write-Host "RESULT: FAIL" -ForegroundColor Red
+    exit 0
   }
+  else {
+    Write-Host "RESULT: FAIL" -ForegroundColor Red
+    exit 1
+  }
+
   Write-Host "==============================" -ForegroundColor White
 }
