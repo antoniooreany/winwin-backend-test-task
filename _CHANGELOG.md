@@ -1,6 +1,9 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and this project adheres informally to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 The repository follows a Git Flow-style process with feature branches merged into `develop`, release branches merged into `main`, and tagged releases published from `main`.
 

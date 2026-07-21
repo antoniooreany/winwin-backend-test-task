@@ -1,57 +1,41 @@
 # Contributing
 
-Thanks for your interest in contributing to the WinWin Backend Test Task repository.
+This repository is primarily a backend test-task submission, but the following conventions are used to keep changes consistent and reviewable.
 
-This project is intentionally kept small and focused. Contributions should aim
-to improve clarity, correctness, or test coverage without overengineering.
+## Local workflow
 
-## Branching Model
-
-The repository follows a GitFlow-style branching strategy:
-
-- `main` — stable releases
-- `develop` — integration branch
-- `feature/*` — new features or refactorings
-- `release/*` — release stabilization
-- `hotfix/*` — urgent fixes on top of production
-
-## Contribution Steps
-
-1. Create a feature branch from `develop`, for example:
-   - `feature/my-improvement`
-2. Implement the change and add or update tests.
-3. Ensure the build is green locally:
-
+1. Build both services:
    ```bash
-   mvn -f auth-api/pom.xml clean test
-   mvn -f data-api/pom.xml clean test
+   mvn -f auth-api/pom.xml clean package -DskipTests
+   mvn -f data-api/pom.xml clean package -DskipTests
    ```
 
-4. Push your feature branch to GitHub.
-5. Open a Pull Request into `develop`.
-6. Make sure the PR description explains:
-   - what was changed,
-   - why it was changed,
-   - how it was tested.
+2. Start the local stack:
+   ```bash
+   docker compose up -d --build
+   ```
 
-## Code Style and Tests
+3. Verify the runtime state:
+   - check both `/health` endpoints;
+   - run the smoke script if available;
+   - verify auth and protected processing behavior manually when needed.
 
-- Prefer clear, explicit code over “clever” solutions.
-- Every new behavior should be covered by tests (unit or integration).
-- Do not introduce new external dependencies without a clear need.
+## Change guidelines
 
-## Commit Messages
+- keep the implementation aligned with the assignment scope;
+- do not introduce unnecessary abstractions;
+- do not document unverified behavior as completed;
+- do not log secrets, passwords, or tokens.
 
-- Use concise, descriptive messages (e.g. `feat:`, `fix:`, `test:`, `chore:`).
-- Group related changes into a single commit when possible.
+## Documentation policy
 
-## Reporting Issues
+When project behavior changes, update:
 
-If you find a bug or inconsistency:
+- `README.md`
+- `CHANGELOG.md`
+- `KNOWN-ISSUES.md` when relevant
+- `docs/verification.md` if the verification path changes
 
-1. Check existing issues and documentation.
-2. When opening a new issue, include:
-   - steps to reproduce,
-   - expected vs actual behavior,
-   - environment details (Java version, OS, etc.).
-   
+## Database note
+
+The current project state uses Hibernate-managed schema creation. If Flyway is introduced later, the documentation must be updated accordingly.
