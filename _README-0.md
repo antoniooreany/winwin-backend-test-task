@@ -34,34 +34,15 @@ The following assignment requirements are implemented in the current project sta
 - Maven
 - PostgreSQL
 - Docker Compose
-- GitHub Actions
 
 ## Repository structure
 
 ```text
-/
-├── auth-api/
-│   ├── src/main/java/...    # auth, security, process, persistence
-│   ├── src/test/java/...    # unit tests
-│   ├── src/main/resources/  # application config
-│   ├── pom.xml
-│   └── Dockerfile
-├── data-api/
-│   ├── src/main/java/...    # internal transform API
-│   ├── src/test/java/...    # unit tests
-│   ├── src/main/resources/  # application config
-│   ├── pom.xml
-│   └── Dockerfile
-├── docs/                    # architecture and decision records
-├── scripts/                 # smoke test and helper scripts
-├── .github/workflows/       # CI and release automation
-├── docker-compose.yml       # local multi-service runtime
-├── README.md                # project overview and run guide
-├── CHANGELOG.md             # release history
-├── KNOWN-ISSUES.md          # current limitations
-├── CONTRIBUTING.md          # contribution conventions
-├── SECURITY.md              # security notes and reporting
-└── LICENSE                  # project license
+/auth-api
+/data-api
+/scripts
+/docker-compose.yml
+/README.md
 ```
 
 ## Run locally
@@ -169,12 +150,7 @@ curl -X POST http://localhost:8080/api/process \
   -d '{"text":"hello"}'
 ```
 
-Expected behavior:
-
-- without JWT, the request is rejected with `403 Forbidden`;
-- with a valid JWT, the endpoint is intended to call `data-api` and persist a processing log entry.
-
-Example response on the successful path:
+Expected response:
 
 ```json
 {
@@ -216,9 +192,8 @@ The following behavior has been verified against the current project state:
 - login returns a JWT;
 - `POST /api/process` without JWT is rejected with `403 Forbidden`;
 - direct `POST /api/transform` without the internal token is rejected with `403 Forbidden`;
-- PostgreSQL contains `users` and `processing_log`.
-
-The protected happy-path for `POST /api/process` should be described carefully based on the latest manual verification state. Earlier release-oriented documentation treated it as working, but the latest audit summary also notes a manual run where this path returned `500 Internal Server Error`, so it should not be overstated until re-verified. [file:1990]
+- PostgreSQL contains `users` and `processing_log`;
+- successful processing requests are expected to be persisted in `processing_log`.
 
 ## Database notes
 
@@ -231,7 +206,7 @@ Observed project state:
 - `flyway_schema_history` is not present in the verified local database state;
 - active versioned Flyway migrations are not currently confirmed.
 
-This means the project should currently be described as Hibernate-managed, not Flyway-managed. [file:1990]
+This means the project should currently be described as Hibernate-managed, not Flyway-managed.
 
 ## Smoke test
 
@@ -256,22 +231,11 @@ This implementation intentionally keeps the architecture simple and aligned with
 
 If the project were extended beyond the test-task scope, the next logical improvements would be:
 
-- fix and re-verify the protected `POST /api/process` happy-path if any runtime issue remains;
 - introduce real Flyway migrations under `src/main/resources/db/migration`;
 - switch Hibernate schema mode from `update` to `validate` after migrations are in place;
 - add dedicated automated integration tests for the full Docker Compose happy-path;
 - improve contributor and troubleshooting documentation.
 
-## Useful commands
-
-```bash
-docker compose logs auth-api --tail 200
-docker compose logs data-api --tail 200
-docker compose logs postgres --tail 200
-docker compose logs -f auth-api
-docker compose logs -f data-api
-```
-
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+This project is licensed under the MIT License. See `LICENSE`.

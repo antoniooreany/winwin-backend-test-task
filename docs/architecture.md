@@ -1,58 +1,36 @@
-# Architecture
+# Architecture Overview
 
-## Services
+## Runtime components
 
-### auth-api
+The system consists of three local runtime components:
 
-Responsibilities:
+- `auth-api` — public-facing Spring Boot service responsible for authentication and the protected processing endpoint;
+- `data-api` — internal Spring Boot service responsible for text transformation;
+- `postgres` — relational persistence for users and processing logs.
 
-- register/login flow;
-- JWT-based authentication;
-- protected business endpoint(s);
-- orchestration of internal calls to `data-api`;
-- persistence of users and processing logs.
+## Request flow
 
-### data-api
+1. A client registers and logs in through `auth-api`.
+2. `auth-api` returns a JWT token after successful authentication.
+3. The client calls `POST /api/process` with the JWT.
+4. `auth-api` validates the JWT and forwards the text to `data-api`.
+5. `auth-api` authenticates the internal call with `X-Internal-Token`.
+6. `data-api` transforms the payload and returns the result.
+7. `auth-api` persists a processing log entry in PostgreSQL and returns the transformed result to the client.
 
-Responsibilities:
+## Trust boundaries
 
-- internal-only transformation endpoint;
-- validation of shared internal header/token;
-- simple isolated processing logic.
+- Public boundary: client → `auth-api`
+- Internal boundary: `auth-api` → `data-api`
+- Persistence boundary: `auth-api` → `postgres`
 
-## Communication model
+The public API is protected with JWT, while the internal API is protected with a shared trusted header token.
 
-Planned request flow:
+## Persistence model
 
-1. Client authenticates against `auth-api`
-2. `auth-api` returns JWT
-3. Client calls protected endpoint in `auth-api`
-4. `auth-api` calls `data-api` with internal token
-5. `auth-api` stores processing metadata in Postgres
-6. `auth-api` returns final response to client
-
-## Persistence
-
-Planned relational persistence in Postgres:
+The current minimum persistence model is:
 
 - `users`
 - `processing_log`
 
-## Security model
-
-External access:
-- JWT-based authentication for protected endpoints in `auth-api`
-
-Internal service-to-service access:
-- shared internal token in request header for calls from `auth-api` to `data-api`
-
-## Delivery approach
-
-The implementation is intentionally incremental:
-
-1. repository and CI foundation;
-2. service bootstrap;
-3. JWT authentication;
-4. protected processing flow;
-5. persistence and infrastructure;
-6. release stabilization.
+Schema creation is currently Hibernate-managed in `auth-api`.

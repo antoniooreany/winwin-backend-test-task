@@ -1,11 +1,15 @@
 package com.winwintravel.authapi.auth;
 
-import io.jsonwebtoken.JwtException;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import io.jsonwebtoken.JwtException;
 
 class JwtServiceTest {
 
@@ -19,7 +23,7 @@ class JwtServiceTest {
 
     @Test
     void shouldGenerateToken() {
-        String token = jwtService.generateToken("anton@example.com");
+        String token = jwtService.generateToken("user@example.com");
 
         assertNotNull(token);
         assertFalse(token.isBlank());
@@ -27,25 +31,25 @@ class JwtServiceTest {
 
     @Test
     void shouldExtractUsernameImmediatelyAfterGeneration() {
-        String token = jwtService.generateToken("anton@example.com");
+        String token = jwtService.generateToken("user@example.com");
 
         String username = jwtService.extractUsername(token);
 
-        assertEquals("anton@example.com", username);
+        assertEquals("user@example.com", username);
     }
 
     @Test
     void shouldValidateTokenForMatchingUsername() {
-        String token = jwtService.generateToken("anton@example.com");
+        String token = jwtService.generateToken("user@example.com");
 
-        boolean valid = jwtService.isTokenValid(token, "anton@example.com");
+        boolean valid = jwtService.isTokenValid(token, "user@example.com");
 
         assertTrue(valid);
     }
 
     @Test
     void shouldInvalidateTokenForDifferentUsername() {
-        String token = jwtService.generateToken("anton@example.com");
+        String token = jwtService.generateToken("user@example.com");
 
         boolean valid = jwtService.isTokenValid(token, "other@example.com");
 
