@@ -7,20 +7,22 @@ Backend take-home assignment implementation for WinWin.travel.
 This repository contains my solution for a backend engineering test task.
 
 The project includes:
-- `auth-api` — registration, login, JWT-based authentication, protected processing endpoint, and PostgreSQL persistence.
-- `data-api` — internal text transformation service protected by a shared internal token.
-- `postgres` — persistence layer for users and processing logs.
-- `docker-compose.yml` — local orchestration for both services and PostgreSQL.
+- [`auth-api`](./auth-api) — registration, login, JWT-based authentication, protected processing endpoint, and PostgreSQL persistence.
+- [`data-api`](./data-api) — internal text transformation service protected by a shared internal token.
+- [`postgres`](./docker-compose.yml) — persistence layer for users and processing logs through Docker Compose.
+- [`docker-compose.yml`](./docker-compose.yml) — local orchestration for both services and PostgreSQL.
 
 The goal is to provide a minimal but clear implementation of authentication, internal service-to-service communication, deterministic database startup, and Docker-based local execution.
+
+For verification details, see [docs/verification.md](./docs/verification.md). For current limitations, see [KNOWN-ISSUES.md](./KNOWN-ISSUES.md). For local workflow conventions, see [CONTRIBUTING.md](./CONTRIBUTING.md). For runtime architecture, see [docs/architecture.md](./docs/architecture.md). For implementation trade-offs, see [docs/decisions.md](./docs/decisions.md).
 
 ## Overview
 
 The project contains two Spring Boot services running locally with Docker Compose and PostgreSQL:
 
-- `auth-api` — handles registration, login, JWT-based authentication, and the protected client-facing processing endpoint.
-- `data-api` — internal service used by `auth-api` for text transformation.
-- `postgres` — persistence layer for users and processing logs.
+- [`auth-api`](./auth-api) — handles registration, login, JWT-based authentication, and the protected client-facing processing endpoint.
+- [`data-api`](./data-api) — internal service used by [`auth-api`](./auth-api) for text transformation.
+- [`postgres`](./docker-compose.yml) — persistence layer for users and processing logs.
 
 ## Architecture
 
@@ -30,21 +32,27 @@ Responsibilities:
 - register users;
 - authenticate users and issue JWT tokens;
 - expose a protected `POST /api/process` endpoint;
-- call `data-api` through an internal request;
+- call [`data-api`](./data-api) through an internal request;
 - store a processing log entry in PostgreSQL.
+
+Implementation and request-flow details are described in [docs/architecture.md](./docs/architecture.md) and [docs/decisions.md](./docs/decisions.md).
 
 ### data-api
 
 Responsibilities:
-- expose the transformation endpoint used by `auth-api`;
+- expose the transformation endpoint used by [`auth-api`](./auth-api);
 - validate the shared internal token header;
 - process incoming text and return the transformed value.
+
+Direct access expectations and negative checks are also documented in [docs/verification.md](./docs/verification.md) and [KNOWN-ISSUES.md](./KNOWN-ISSUES.md).
 
 ### postgres
 
 Stores:
 - `users`
 - `processing_log`
+
+Database and schema notes are described in [docs/verification.md](./docs/verification.md), [docs/decisions.md](./docs/decisions.md), and [KNOWN-ISSUES.md](./KNOWN-ISSUES.md).
 
 ## Tech Stack
 
@@ -64,9 +72,14 @@ Stores:
 ├── auth-api
 ├── data-api
 ├── docker-compose.yml
+├── docs
 ├── scripts
+├── KNOWN-ISSUES.md
+├── CONTRIBUTING.md
 └── README.md
 ```
+
+See [docs/architecture.md](./docs/architecture.md) for the runtime view and [docs/decisions.md](./docs/decisions.md) for the rationale behind implementation choices.
 
 ## Run Locally
 
@@ -104,6 +117,8 @@ mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
+The shortest reproducible verification path is also documented in [docs/verification.md](./docs/verification.md). Contributor workflow expectations are described in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Expected Services
 
 After startup, the following services should be available:
@@ -111,6 +126,8 @@ After startup, the following services should be available:
 - `auth-api` — `http://localhost:8080`
 - `data-api` — `http://localhost:8081`
 - `postgres` — `localhost:5432`
+
+Startup assumptions, runtime boundaries, and service roles are also summarized in [docs/architecture.md](./docs/architecture.md).
 
 ## Health Endpoints
 
@@ -133,6 +150,8 @@ Example responses:
 }
 ```
 
+These checks are part of the smoke flow described in [scripts/smoke.ps1](./scripts/smoke.ps1) and explained in [docs/verification.md](./docs/verification.md).
+
 ## API Flow
 
 ### Register
@@ -154,6 +173,8 @@ Example request:
 Expected behavior:
 - creates a new user;
 - stores the password in hashed form.
+
+Registration verification steps are included in [docs/verification.md](./docs/verification.md), and operational notes for contributors are in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ### Login
 
@@ -178,6 +199,8 @@ Example response:
   "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
+
+JWT-related design notes are described in [docs/decisions.md](./docs/decisions.md), and the verification steps are documented in [docs/verification.md](./docs/verification.md).
 
 ### Protected Processing
 
@@ -204,10 +227,12 @@ Example response:
 ```
 
 Expected behavior:
-- validates the JWT in `auth-api`;
-- forwards the request to `data-api` using the internal token header;
+- validates the JWT in [`auth-api`](./auth-api);
+- forwards the request to [`data-api`](./data-api) using the internal token header;
 - returns the transformed result to the client;
 - stores a processing log record in PostgreSQL.
+
+This flow is currently verified end-to-end by the smoke script in [scripts/smoke.ps1](./scripts/smoke.ps1). The step-by-step check is described in [docs/verification.md](./docs/verification.md).
 
 ## Manual Smoke Test
 
@@ -264,6 +289,8 @@ curl -X POST http://localhost:8081/api/transform \
 Expected result:
 - request is rejected with `403 Forbidden`.
 
+These manual checks mirror the automated sequence in [scripts/smoke.ps1](./scripts/smoke.ps1). The same flow is summarized in [docs/verification.md](./docs/verification.md).
+
 ## PowerShell Smoke Test
 
 A PowerShell smoke script can be run from the project root like this:
@@ -284,6 +311,8 @@ A typical smoke test should:
 - verify that `data-api` rejects direct access without a valid internal token;
 - print a final PASS/FAIL summary.
 
+The current verification strategy is documented in [docs/verification.md](./docs/verification.md). Contributor expectations around rerunning the smoke flow are described in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Database
 
 The PostgreSQL schema is initialized through Flyway migrations.
@@ -294,6 +323,8 @@ Current approach:
 - application startup does not rely only on ad hoc local database state.
 
 This keeps local startup reproducible and easier to verify.
+
+Database verification examples are included in [docs/verification.md](./docs/verification.md). Remaining database-related limitations, if any, are listed in [KNOWN-ISSUES.md](./KNOWN-ISSUES.md).
 
 ## Useful Commands
 
@@ -321,6 +352,8 @@ mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
+These commands are also useful during the workflow described in [CONTRIBUTING.md](./CONTRIBUTING.md) and during troubleshooting noted in [KNOWN-ISSUES.md](./KNOWN-ISSUES.md).
+
 ## Notes
 
 - `data-api` is intended for internal use only and should accept requests only when the shared `X-Internal-Token` header is valid.
@@ -329,7 +362,13 @@ docker compose up -d --build
 - the solution intentionally keeps the architecture simple and focused on the task requirements.
 - `spotless:check` may fail in this environment due to a `google-java-format` and JDK compatibility issue, so formatting was applied with IDE tooling.
 
+Related project resources:
+- [docs/verification.md](./docs/verification.md)
+- [KNOWN-ISSUES.md](./KNOWN-ISSUES.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [docs/architecture.md](./docs/architecture.md)
+- [docs/decisions.md](./docs/decisions.md)
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE).
-

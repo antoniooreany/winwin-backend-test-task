@@ -6,6 +6,7 @@ $DataBase = "http://localhost:8081"
 $RegisterEndpoint = "$AuthBase/api/auth/register"
 $LoginEndpoint    = "$AuthBase/api/auth/login"
 $ProcessEndpoint  = "$AuthBase/api/process"
+$TransformEndpoint = "$DataBase/api/transform"
 $AuthHealth       = "$AuthBase/health"
 $DataHealth       = "$DataBase/health"
 
@@ -83,6 +84,21 @@ try {
     $gitStatus
   }
 
+  Step "Ensure service JAR files exist"
+  if (-not (Test-Path "auth-api/target/auth-api-0.0.1-SNAPSHOT.jar")) {
+    Write-Host "[INFO] Building auth-api JAR" -ForegroundColor Cyan
+    mvn -f auth-api/pom.xml clean package -DskipTests
+    if ($LASTEXITCODE -ne 0) { throw "auth-api build failed" }
+  }
+
+  if (-not (Test-Path "data-api/target/data-api-0.0.1-SNAPSHOT.jar")) {
+    Write-Host "[INFO] Building data-api JAR" -ForegroundColor Cyan
+    mvn -f data-api/pom.xml clean package -DskipTests
+    if ($LASTEXITCODE -ne 0) { throw "data-api build failed" }
+  }
+
+  Pass "Required JAR files are available"
+
   Step "Docker Compose reset"
   docker compose down -v --remove-orphans | Out-Null
   docker compose up --build -d
@@ -151,7 +167,7 @@ try {
   Step "Call protected process endpoint"
   $processBody = @{
     text = "hello"
-  } | ConvertTo-Json
+  } | ConvertTo-Json -Compress
 
   try {
     $processResp = Invoke-RestMethod `
@@ -196,6 +212,32 @@ try {
       Fail "Protected endpoint rejected unauthenticated request with unexpected status: $statusCode"
     }
   }
+
+  Step "Negative check: direct access to data-api"
+  try {
+    Invoke-RestMethod `
+      -Uri $TransformEndpoint `
+      -Method Post `
+      -ContentType "application/json" `
+      -Body $processBody `
+      -TimeoutSec 15 | Out-Null
+
+    Fail "data-api unexpectedly allowed direct access without internal token"
+  }
+  catch {
+    $statusCode = $null
+
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+      $statusCode = [int]$_.Exception.Response.StatusCode
+    }
+
+    if ($statusCode -eq 401 -or $statusCode -eq 403) {
+      Pass "data-api correctly rejected direct access without internal token ($statusCode)"
+    }
+    else {
+      Fail "data-api rejected direct access with unexpected status: $statusCode"
+    }
+  }
 }
 catch {
   Write-Host "`nSmoke test terminated with error: $($_.Exception.Message)" -ForegroundColor Red
@@ -221,8 +263,11 @@ finally {
       Write-Host "  docker compose ps" -ForegroundColor Yellow
       Write-Host "  docker compose logs --tail=200 auth-api" -ForegroundColor Yellow
       Write-Host "  docker compose logs --tail=200 data-api" -ForegroundColor Yellow
+      Write-Host "  docker compose logs --tail=200 postgres" -ForegroundColor Yellow
       Write-Host "  curl http://localhost:8080/health" -ForegroundColor Yellow
       Write-Host "  curl http://localhost:8081/health" -ForegroundColor Yellow
+      Write-Host "  git status --short" -ForegroundColor Yellow
+      Write-Host "  git diff -- .gitignore README.md KNOWN-ISSUES.md CONTRIBUTING.md docs/verification.md docs/architecture.md docs/decisions.md scripts/smoke.ps1" -ForegroundColor Yellow
       Write-Host "When finished, clean up manually with:" -ForegroundColor Yellow
       Write-Host "  docker compose down -v" -ForegroundColor Yellow
     }
