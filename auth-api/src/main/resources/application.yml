@@ -3,9 +3,9 @@ spring:
     name: auth-api
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/appdb
-    username: appuser
-    password: apppass
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/appdb}
+    username: ${SPRING_DATASOURCE_USERNAME:appuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:apppass}
     driver-class-name: org.postgresql.Driver
 
   flyway:
@@ -24,11 +24,7 @@ spring:
 server:
   port: 8080
 
-logging:
-  level:
-    org.flywaydb: INFO
-    org.springframework.jdbc.datasource.init: INFO
-    org.hibernate.SQL: INFO
 data-api:
-  base-url: ${DATA_API_BASE_URL:http://data-api:8081}
+  base-url: ${DATA_API_BASE_URL:http://localhost:8081}
   internal-token: ${INTERNAL_TOKEN:change-me-in-env}
+  
