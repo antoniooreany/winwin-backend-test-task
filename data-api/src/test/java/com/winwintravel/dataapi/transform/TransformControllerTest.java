@@ -1,24 +1,22 @@
 package com.winwintravel.dataapi.transform;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-class TransformControllerTest {
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-    private MockMvc mockMvc;
+class TransformControllerTest {
 
     private static final String TRANSFORM_PATH = "/api/transform";
     private static final String INTERNAL_TOKEN_HEADER = "X-Internal-Token";
     private static final String INTERNAL_TOKEN = "test-internal-token";
-    private static final String VALID_TEXT = "hello";
-    private static final String UPPERCASE_TEXT = "HELLO";
+
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
@@ -28,17 +26,18 @@ class TransformControllerTest {
     }
 
     @Test
-    void transform_shouldReturnUppercaseResult_forValidInternalToken() throws Exception {
+    void transform_shouldReturnReversedResult_forValidInternalToken() throws Exception {
         mockMvc.perform(post(TRANSFORM_PATH)
                 .contentType("application/json")
                 .header(INTERNAL_TOKEN_HEADER, INTERNAL_TOKEN)
                 .content("""
                         {
-                          "text": "%s"
+                          "text": "hello"
                         }
-                        """.formatted(VALID_TEXT)))
+                        """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result").value(UPPERCASE_TEXT));    }
+                .andExpect(jsonPath("$.result").value("olleh"));
+    }
 
     @Test
     void transform_shouldReturnEmptyResult_whenTextIsNull() throws Exception {
@@ -46,10 +45,10 @@ class TransformControllerTest {
                 .contentType("application/json")
                 .header(INTERNAL_TOKEN_HEADER, INTERNAL_TOKEN)
                 .content("""
-                                {
-                                  "text": null
-                                }
-                                """))
+                        {
+                          "text": null
+                        }
+                        """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result").value(""));
     }
@@ -60,9 +59,9 @@ class TransformControllerTest {
                 .contentType("application/json")
                 .content("""
                         {
-                          "text": "%s"
+                          "text": "hello"
                         }
-                        """.formatted(VALID_TEXT)))
+                        """))
                 .andExpect(status().isForbidden());
     }
 
@@ -73,9 +72,9 @@ class TransformControllerTest {
                 .header(INTERNAL_TOKEN_HEADER, "wrong-token")
                 .content("""
                         {
-                          "text": "%s"
+                          "text": "hello"
                         }
-                        """.formatted(VALID_TEXT)))
+                        """))
                 .andExpect(status().isForbidden());
     }
 }
