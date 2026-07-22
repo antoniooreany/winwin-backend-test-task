@@ -22,13 +22,87 @@ function Invoke-JsonPost {
         [hashtable]$Headers = @{}
     )
 
-    Invoke-RestMethod -Method Post `
-        -Uri $Url `
-        -ContentType "application/json" `
-        -Headers $Headers `
-        -Body ($Body | ConvertTo-Json -Compress)
+    $json = $Body | ConvertTo-Json -Compress
+
+    try {
+        $result = Invoke-RestMethod -Method Post `
+            -Uri $Url `
+            -ContentType "application/json" `
+            -Headers $Headers `
+            -Body $json
+
+        [pscustomobject]@{
+            Ok          = $true
+            Url         = $Url
+            RequestBody = $json
+            StatusCode  = 200
+            Data        = $result
+            ErrorText   = $null
+            ErrorBody   = $null
+        }
+    }
+    catch {
+        $statusCode = $null
+        $errorText = $_.Exception.Message
+        $errorBody = $null
+
+        if ($_.Exception.Response) {
+            try {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+            }
+            catch {}
+
+            if (-not [string]::IsNullOrWhiteSpace($_.ErrorDetails.Message)) {
+                $errorBody = $_.ErrorDetails.Message
+            }
+            else {
+                try {
+                    $stream = $_.Exception.Response.GetResponseStream()
+                    if ($stream) {
+                        $reader = New-Object System.IO.StreamReader($stream)
+                        $reader.BaseStream.Position = 0
+                        $reader.DiscardBufferedData()
+                        $errorBody = $reader.ReadToEnd()
+                    }
+                }
+                catch {}
+            }
+        }
+
+        [pscustomobject]@{
+            Ok          = $false
+            Url         = $Url
+            RequestBody = $json
+            StatusCode  = $statusCode
+            Data        = $null
+            ErrorText   = $errorText
+            ErrorBody   = $errorBody
+        }
+    }
 }
 
+
+function Wait-HttpReady {
+    param(
+        [string]$Url,
+        [int]$MaxAttempts = 40,
+        [int]$DelaySeconds = 3
+    )
+
+    for ($i = 1; $i -le $MaxAttempts; $i++) {
+        try {
+            Invoke-WebRequest -Uri $Url -Method Get -TimeoutSec 5 | Out-Null
+            Write-Host "READY: $Url" -ForegroundColor Green
+            return
+        }
+        catch {
+            Write-Host ("WAIT  : " + $Url + " (attempt " + $i + "/" + $MaxAttempts + ")") -ForegroundColor Yellow
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+
+    throw "Service is not ready: $Url"
+}
 function Require-Command {
     param([string]$Name)
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
@@ -43,6 +117,18 @@ function Show-ProcessingLog {
     }
 
     docker exec -i $pg psql -U appuser -d appdb -c "select id, user_email, input_text, output_text, created_at from processinglog order by id desc limit 10;"
+}
+
+function Show-ServiceLogs {
+    param(
+        [string[]]$Services = @("auth-api", "data-api"),
+        [int]$Tail = 80
+    )
+
+    foreach ($service in $Services) {
+        Write-Host "`n--- LOGS: $service (last $Tail lines) ---" -ForegroundColor DarkYellow
+        docker compose logs --tail $Tail $service
+    }
 }
 
 Require-Command mvn
@@ -66,7 +152,7 @@ if ($RebuildAndRestart) {
     if ($LASTEXITCODE -ne 0) { throw "auth-api package failed" }
 
     Write-Step "DOCKER COMPOSE RESTART"
-    docker compose down -v
+    docker compose down
     if ($LASTEXITCODE -ne 0) { throw "docker compose down failed" }
 
     docker compose up -d --build
@@ -76,35 +162,47 @@ if ($RebuildAndRestart) {
 }
 
 Write-Step "HTTP PREFLIGHT"
-
-$authPort = Test-NetConnection localhost -Port 8080 -WarningAction SilentlyContinue
-$dataPort = Test-NetConnection localhost -Port 8081 -WarningAction SilentlyContinue
-
-if (-not $authPort.TcpTestSucceeded) {
-    throw "auth-api is not reachable on localhost:8080"
-}
-
-if (-not $dataPort.TcpTestSucceeded) {
-    Write-Host "Warning: data-api is not reachable on localhost:8081" -ForegroundColor Yellow
-}
+Wait-HttpReady -Url "http://127.0.0.1:8080/health"
+Wait-HttpReady -Url "http://127.0.0.1:8081/health"
 
 Write-Step "AUTH REGISTER"
-try {
-    $null = Invoke-JsonPost -Url "$BaseUrl/api/auth/register" -Body @{
-        email = $Email
-        password = $Password
-    }
-    Write-Host "Register OK" -ForegroundColor Green
-}
-catch {
-    Write-Host "Register skipped (user may already exist)" -ForegroundColor Yellow
-}
-
-Write-Step "AUTH LOGIN"
-$login = Invoke-JsonPost -Url "$BaseUrl/api/auth/login" -Body @{
+$register = Invoke-JsonPost -Url "$BaseUrl/api/auth/register" -Body @{
     email = $Email
     password = $Password
 }
+
+if ($register.Ok) {
+    Write-Host "Register OK" -ForegroundColor Green
+}
+else {
+    Write-Host "Register skipped/failed" -ForegroundColor Yellow
+    if ($register.StatusCode) {
+        Write-Host ("STATUS : " + $register.StatusCode) -ForegroundColor Yellow
+    }
+    if ($register.ErrorBody) {
+        Write-Host ("BODY   : " + $register.ErrorBody) -ForegroundColor DarkYellow
+    }
+}
+
+Write-Step "AUTH LOGIN"
+$loginResult = Invoke-JsonPost -Url "$BaseUrl/api/auth/login" -Body @{
+    email = $Email
+    password = $Password
+}
+
+if (-not $loginResult.Ok) {
+    if ($loginResult.StatusCode) {
+        Write-Host ("STATUS : " + $loginResult.StatusCode) -ForegroundColor Red
+    }
+    Write-Host ("ERROR  : " + $loginResult.ErrorText) -ForegroundColor Red
+    if ($loginResult.ErrorBody) {
+        Write-Host ("BODY   : " + $loginResult.ErrorBody) -ForegroundColor Red
+    }
+    Show-ServiceLogs -Services @("auth-api") -Tail 120
+    throw "Login failed"
+}
+
+$login = $loginResult.Data
 
 if (-not $login.token) {
     throw "Login failed: token not returned"
@@ -118,18 +216,30 @@ Write-Host ("Token prefix: " + $token.Substring(0, [Math]::Min(20, $token.Length
 
 Write-Step "PROCESS FLOW"
 foreach ($text in $Texts) {
-    Remove-Variable response -ErrorAction SilentlyContinue
+    $result = Invoke-JsonPost -Url "$BaseUrl/api/process" -Headers $headers -Body @{ text = $text }
 
-    try {
-        $response = Invoke-JsonPost -Url "$BaseUrl/api/process" -Headers $headers -Body @{ text = $text }
+    Write-Host ("INPUT        : " + $text) -ForegroundColor DarkCyan
+    Write-Host ("REQUEST URL  : " + $result.Url) -ForegroundColor DarkGray
+    Write-Host ("REQUEST BODY : " + $result.RequestBody) -ForegroundColor DarkGray
 
-        Write-Host ("INPUT  : " + $text) -ForegroundColor DarkCyan
-        Write-Host ("OUTPUT : " + ($response | ConvertTo-Json -Compress)) -ForegroundColor Green
+    if ($result.Ok) {
+        Write-Host ("STATUS       : " + $result.StatusCode) -ForegroundColor Green
+        Write-Host ("OUTPUT       : " + ($result.Data | ConvertTo-Json -Compress -Depth 10)) -ForegroundColor Green
     }
-    catch {
-        Write-Host ("INPUT  : " + $text) -ForegroundColor DarkCyan
-        Write-Host "OUTPUT : FAILED" -ForegroundColor Red
-        Write-Host $_.Exception.Message -ForegroundColor Red
+    else {
+        if ($result.StatusCode) {
+            Write-Host ("STATUS       : " + $result.StatusCode) -ForegroundColor Red
+        }
+        Write-Host "OUTPUT       : FAILED" -ForegroundColor Red
+        Write-Host ("ERROR        : " + $result.ErrorText) -ForegroundColor Red
+
+        if ($result.ErrorBody) {
+            Write-Host ("ERROR BODY   : " + $result.ErrorBody) -ForegroundColor Red
+        }
+
+        if ($result.StatusCode -ge 500) {
+            Show-ServiceLogs -Services @("auth-api", "data-api") -Tail 120
+        }
     }
 }
 
@@ -183,3 +293,5 @@ Show-ProcessingLog
 
 Write-Step "DONE"
 Write-Host "All checks completed" -ForegroundColor Green
+
+
