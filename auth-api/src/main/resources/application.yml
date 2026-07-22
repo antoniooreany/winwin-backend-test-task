@@ -30,5 +30,5 @@ logging:
     org.springframework.jdbc.datasource.init: INFO
     org.hibernate.SQL: INFO
 data-api:
-  base-url: 
-  internal-token: 
+  base-url: ${DATA_API_BASE_URL:http://data-api:8081}
+  internal-token: ${INTERNAL_TOKEN:change-me-in-env}
