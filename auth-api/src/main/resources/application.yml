@@ -1,33 +1,34 @@
 spring:
   application:
     name: auth-api
+
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/appdb}
-    username: ${SPRING_DATASOURCE_USERNAME:appuser}
-    password: ${SPRING_DATASOURCE_PASSWORD:apppassword}
+    url: jdbc:postgresql://postgres:5432/appdb
+    username: appuser
+    password: apppass
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
-  jackson:
-    serialization:
-      INDENT_OUTPUT: true
 
 server:
   port: 8080
 
-data-api:
-  base-url: ${DATA_API_BASE_URL:http://localhost:8081}
-  internal-token: ${INTERNAL_TOKEN:change-me-in-env}
-
-jwt:
-  secret: ${JWT_SECRET:change-me-in-env}
-
 logging:
   level:
-    org.springframework.security: TRACE
-
+    org.flywaydb: INFO
+    org.springframework.jdbc.datasource.init: INFO
+    org.hibernate.SQL: INFO
+data-api:
+  base-url: 
+  internal-token: 
