@@ -6,7 +6,13 @@ Project entry point: [README.md](../README.md)
 Architecture: [docs/architecture.md](./architecture.md)  
 Technical rationale: [docs/decisions.md](./decisions.md)  
 Known limitations: [KNOWN-ISSUES.md](../KNOWN-ISSUES.md)  
+Local workflow: [CONTRIBUTING.md](../CONTRIBUTING.md)  
+Security note: [SECURITY.md](../SECURITY.md)  
 Automated check: [scripts/smoke.ps1](../scripts/smoke.ps1)
+
+## Verification Scope
+
+This guide validates the same main runtime path summarized in [README.md](../README.md), explained in [docs/architecture.md](./architecture.md), and justified in [docs/decisions.md](./decisions.md). Scope limitations and simplifications are documented in [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
 
 ## Prerequisites
 
@@ -15,6 +21,8 @@ Before running any command, make sure:
 - Java 21 is installed
 - Maven is available
 - a local [`.env`](../.env.example) file has been created based on [`.env.example`](../.env.example)
+
+For setup context, also see [README.md](../README.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Recommended Path
 
@@ -33,6 +41,8 @@ This script validates:
 - rejection without JWT
 - rejection of direct access to [`data-api`](../data-api)
 
+The script is the shortest reproducible path described in [README.md](../README.md) and maintained alongside [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Manual Verification
 
 ### 1. Clean start
@@ -49,6 +59,8 @@ Expected:
 - all three containers are running
 - PostgreSQL is healthy
 
+This step aligns with [README.md](../README.md), [CONTRIBUTING.md](../CONTRIBUTING.md), and [docs/architecture.md](./architecture.md).
+
 ### 2. Health checks
 
 ```powershell
@@ -60,6 +72,8 @@ Expected responses:
 - `{"status":"ok","service":"auth-api"}`
 - `{"status":"ok","service":"data-api"}`
 
+Health responses should remain aligned with [README.md](../README.md), [CHANGELOG.md](../CHANGELOG.md), and [scripts/smoke.ps1](../scripts/smoke.ps1).
+
 ### 3. Register
 
 ```powershell
@@ -69,6 +83,8 @@ Invoke-WebRequest -Method POST -Uri "http://localhost:8080/api/auth/register" -C
 
 Expected:
 - HTTP 201 Created
+
+This step exercises the public boundary described in [docs/architecture.md](./architecture.md).
 
 ### 4. Login
 
@@ -82,6 +98,8 @@ $token
 Expected:
 - a JWT token is returned
 
+This matches the authentication model described in [docs/decisions.md](./decisions.md) and [docs/architecture.md](./architecture.md).
+
 ### 5. Protected processing
 
 ```powershell
@@ -92,6 +110,8 @@ Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/process" -Headers
 Expected response:
 - `{"result":"olleh"}`
 
+This step validates the main runtime flow documented in [README.md](../README.md), [docs/architecture.md](./architecture.md), and [scripts/smoke.ps1](../scripts/smoke.ps1).
+
 ### 6. Database verification
 
 ```powershell
@@ -101,6 +121,8 @@ docker exec winwin-backend-test-task-postgres-1 psql -U appuser -d appdb -c "SEL
 Expected:
 - at least one row appears after a successful processing request
 - the inserted row contains `user_email`, input text, output text, and timestamp
+
+This confirms the current persistence model documented in [README.md](../README.md), [docs/architecture.md](./architecture.md), [docs/decisions.md](./decisions.md), and [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
 
 ### 7. Negative scenario: no JWT
 
@@ -117,6 +139,8 @@ Expected:
 - request is rejected
 - current expected status is `403`
 
+The boundary being tested here is described in [docs/architecture.md](./architecture.md) and [docs/decisions.md](./decisions.md).
+
 ### 8. Negative scenario: direct access to data-api without internal token
 
 ```powershell
@@ -131,6 +155,8 @@ try {
 Expected:
 - request is rejected
 - current expected status is `403`
+
+This matches the internal-service boundary described in [docs/architecture.md](./architecture.md), [docs/decisions.md](./decisions.md), and [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
 
 ### 9. Negative scenario: wrong internal token
 
@@ -147,9 +173,11 @@ Expected:
 - request is rejected
 - current expected status is `403`
 
+This check supports the same trust-boundary assumptions described in [docs/architecture.md](./architecture.md) and [docs/decisions.md](./decisions.md).
+
 ## Notes
 
-- [`auth-api`](../auth-api) applies Flyway migrations on startup.
-- The current database table name is `processinglog`, not `processing_log`.
-- The current processing log stores `user_email`, not `user_id`.
+- [`auth-api`](../auth-api) applies Flyway migrations on startup; see [docs/decisions.md](./decisions.md), [README.md](../README.md), and [CHANGELOG.md](../CHANGELOG.md).
+- The current database table name is `processinglog`, not `processing_log`; see [README.md](../README.md), [docs/architecture.md](./architecture.md), and [CHANGELOG.md](../CHANGELOG.md).
+- The current processing log stores `user_email`, not `user_id`; see [KNOWN-ISSUES.md](../KNOWN-ISSUES.md) and [docs/decisions.md](./decisions.md).
 - For the shortest reproducible review path, prefer [scripts/smoke.ps1](../scripts/smoke.ps1) over manual request-by-request verification.
