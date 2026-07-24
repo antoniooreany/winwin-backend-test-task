@@ -1,12 +1,43 @@
 # Verification Guide
 
-This guide provides the shortest reproducible path for validating the current project state.
+This document describes how to verify the project locally using only PowerShell commands.
 
-For the project overview and run instructions, see [README.md](../README.md). For current limitations and accepted trade-offs, see [KNOWN-ISSUES.md](../KNOWN-ISSUES.md). For local workflow conventions, see [CONTRIBUTING.md](../CONTRIBUTING.md). For the current smoke implementation, see [scripts/smoke.ps1](../scripts/smoke.ps1). For runtime structure, see [docs/architecture.md](./architecture.md). For implementation rationale, see [docs/decisions.md](./decisions.md).
+Project entry point: [README.md](../README.md)  
+Architecture: [docs/architecture.md](./architecture.md)  
+Technical rationale: [docs/decisions.md](./decisions.md)  
+Known limitations: [KNOWN-ISSUES.md](../KNOWN-ISSUES.md)  
+Automated check: [scripts/smoke.ps1](../scripts/smoke.ps1)
 
-## Clean Start
+## Prerequisites
 
-```bash
+Before running any command, make sure:
+- Docker Desktop is running
+- Java 21 is installed
+- Maven is available
+- a local [`.env`](../.env.example) file has been created based on [`.env.example`](../.env.example)
+
+## Recommended Path
+
+The recommended reviewer path is:
+
+```powershell
+.\scripts\smoke.ps1
+```
+
+This script validates:
+- Docker Compose startup
+- health checks
+- registration
+- login
+- protected processing
+- rejection without JWT
+- rejection of direct access to [`data-api`](../data-api)
+
+## Manual Verification
+
+### 1. Clean start
+
+```powershell
 docker compose down -v
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
@@ -14,106 +45,111 @@ docker compose up -d --build
 docker compose ps
 ```
 
-This matches the local startup path described in [README.md](../README.md).
+Expected:
+- all three containers are running
+- PostgreSQL is healthy
 
-## Health Checks
+### 2. Health checks
 
-```bash
-curl http://localhost:8080/health
-curl http://localhost:8081/health
+```powershell
+Invoke-RestMethod -Method GET -Uri "http://localhost:8080/health"
+Invoke-RestMethod -Method GET -Uri "http://localhost:8081/health"
 ```
 
-These checks are also part of [scripts/smoke.ps1](../scripts/smoke.ps1) and the local workflow in [CONTRIBUTING.md](../CONTRIBUTING.md).
+Expected responses:
+- `{"status":"ok","service":"auth-api"}`
+- `{"status":"ok","service":"data-api"}`
 
-## Register User
+### 3. Register
 
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"reviewer@example.com","password":"Pass12345!"}'
-```
-
-This corresponds to the register flow shown in [README.md](../README.md).
-
-## Login
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"reviewer@example.com","password":"Pass12345!"}'
-```
-
-Save the returned JWT token. JWT usage and request flow are also referenced in [README.md](../README.md) and [docs/architecture.md](./architecture.md).
-
-## Protected Processing
-
-```bash
-curl -X POST http://localhost:8080/api/process \
-  -H "Authorization: Bearer <JWT>" \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected response:
-
-```json
-{
-  "result": "olleh"
-}
-```
-
-This endpoint is part of the end-to-end flow described in [README.md](../README.md), [docs/architecture.md](./architecture.md), and [scripts/smoke.ps1](../scripts/smoke.ps1).
-
-## Negative Checks
-
-### Without JWT
-
-```bash
-curl -X POST http://localhost:8080/api/process \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected: `403 Forbidden`
-
-This negative check is also part of [README.md](../README.md) and [scripts/smoke.ps1](../scripts/smoke.ps1).
-
-### Direct Call to data-api
-
-```bash
-curl -X POST http://localhost:8081/api/transform \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected: `403 Forbidden`
-
-This behavior is intentional and also explained in [README.md](../README.md), [KNOWN-ISSUES.md](../KNOWN-ISSUES.md), and [docs/architecture.md](./architecture.md).
-
-## Database Checks
-
-```bash
-docker exec winwin-backend-test-task-postgres-1 \
-  psql -U appuser -d appdb \
-  -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
-
-docker exec winwin-backend-test-task-postgres-1 \
-  psql -U appuser -d appdb \
-  -c "SELECT COUNT(*) FROM processing_log;"
+```powershell
+$registerBody = @{ email = "reviewer@example.com"; password = "Pass12345!" } | ConvertTo-Json
+Invoke-WebRequest -Method POST -Uri "http://localhost:8080/api/auth/register" -ContentType "application/json" -Body $registerBody
 ```
 
 Expected:
-- `users` and `processing_log` tables are present;
-- successful processing requests increase the `processing_log` count.
+- HTTP 201 Created
 
-These checks support the persistence claims from [README.md](../README.md) and the schema notes in [docs/decisions.md](./decisions.md).
-
-## Smoke Script
+### 4. Login
 
 ```powershell
-pwsh ./scripts/smoke.ps1
+$loginBody = @{ email = "reviewer@example.com"; password = "Pass12345!" } | ConvertTo-Json
+$loginResponse = Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/auth/login" -ContentType "application/json" -Body $loginBody
+$token = $loginResponse.token
+$token
 ```
 
-Expected result: final `PASS`.
+Expected:
+- a JWT token is returned
 
-This is the preferred quick verification path referenced in [README.md](../README.md), [CONTRIBUTING.md](../CONTRIBUTING.md), and [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
+### 5. Protected processing
+
+```powershell
+$processBody = @{ text = "hello" } | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/process" -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json" -Body $processBody
+```
+
+Expected response:
+- `{"result":"olleh"}`
+
+### 6. Database verification
+
+```powershell
+docker exec winwin-backend-test-task-postgres-1 psql -U appuser -d appdb -c "SELECT id, user_email, input_text, output_text, created_at FROM processinglog ORDER BY id DESC LIMIT 5;"
+```
+
+Expected:
+- at least one row appears after a successful processing request
+- the inserted row contains `user_email`, input text, output text, and timestamp
+
+### 7. Negative scenario: no JWT
+
+```powershell
+$body = @{ text = "hello" } | ConvertTo-Json
+try {
+    Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/process" -ContentType "application/json" -Body $body
+} catch {
+    $_.Exception.Message
+}
+```
+
+Expected:
+- request is rejected
+- current expected status is `403`
+
+### 8. Negative scenario: direct access to data-api without internal token
+
+```powershell
+$body = @{ text = "hello" } | ConvertTo-Json
+try {
+    Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/transform" -ContentType "application/json" -Body $body
+} catch {
+    $_.Exception.Message
+}
+```
+
+Expected:
+- request is rejected
+- current expected status is `403`
+
+### 9. Negative scenario: wrong internal token
+
+```powershell
+$body = @{ text = "hello" } | ConvertTo-Json
+try {
+    Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/transform" -Headers @{ "X-Internal-Token" = "wrong-token" } -ContentType "application/json" -Body $body
+} catch {
+    $_.Exception.Message
+}
+```
+
+Expected:
+- request is rejected
+- current expected status is `403`
+
+## Notes
+
+- [`auth-api`](../auth-api) applies Flyway migrations on startup.
+- The current database table name is `processinglog`, not `processing_log`.
+- The current processing log stores `user_email`, not `user_id`.
+- For the shortest reproducible review path, prefer [scripts/smoke.ps1](../scripts/smoke.ps1) over manual request-by-request verification.

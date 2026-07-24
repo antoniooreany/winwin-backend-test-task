@@ -46,7 +46,7 @@ This keeps the implementation aligned with the assignment scope summarized in [R
 
 Use PostgreSQL for persistence and keep the schema deterministic through Flyway migrations.
 
-This should remain consistent with the schema notes in [README.md](../README.md), the validation steps in [docs/verification.md](./verification.md), and any future updates to [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
+This remains consistent with the schema notes in [README.md](../README.md), the validation steps in [docs/verification.md](./verification.md), and the scope described in [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
 
 ### Smoke Verification
 

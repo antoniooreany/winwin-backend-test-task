@@ -6,9 +6,9 @@ This document summarizes the runtime structure referenced from [README.md](../RE
 
 The system consists of three local runtime components:
 
-- [`auth-api`](../auth-api) — public-facing Spring Boot service responsible for authentication and the protected processing endpoint;
-- [`data-api`](../data-api) — internal Spring Boot service responsible for text transformation;
-- [`postgres`](../docker-compose.yml) — relational persistence for users and processing logs.
+- [`auth-api`](../auth-api) — public-facing Spring Boot service responsible for authentication and the protected processing endpoint
+- [`data-api`](../data-api) — internal Spring Boot service responsible for text transformation
+- [`postgres`](../docker-compose.yml) — relational persistence for users and processing logs
 
 The local orchestration entry point is [`docker-compose.yml`](../docker-compose.yml), as also described in [README.md](../README.md).
 
@@ -37,6 +37,6 @@ The public API is protected with JWT, while the internal API is protected with a
 The current minimum persistence model is:
 
 - `users`
-- `processing_log`
+- `processinglog`
 
 The verification steps for these tables are documented in [docs/verification.md](./verification.md). Scope and trade-offs are described in [docs/decisions.md](./decisions.md).

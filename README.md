@@ -1,130 +1,83 @@
 # WinWin Backend Test Task
 
-Backend take-home for [WinWin.travel](https://winwin.travel): two Spring Boot services + PostgreSQL, started with Docker Compose.
+Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
-- `auth-api` — register / login (JWT + BCrypt), protected `POST /api/process`
-- `data-api` — internal `POST /api/transform` (requires `X-Internal-Token`)
-- `postgres` — `users` and `processing_log` (Flyway)
+## Overview
 
-`data-api` reverses the input text. Example: `"hello"` → `"olleh"`.
+The project includes:
+- [`auth-api`](./auth-api) — registration, login, JWT authentication, and protected processing
+- [`data-api`](./data-api) — internal text transformation endpoint protected by `X-Internal-Token`
+- [`postgres`](https://www.postgresql.org/) — persistence for users and processing logs
+
+Main flow:
+1. A user registers in [`auth-api`](./auth-api)
+2. A user logs in and receives a JWT token
+3. A user calls `POST /api/process`
+4. [`auth-api`](./auth-api) calls [`data-api`](./data-api)
+5. The transformed result is returned to the client and stored in PostgreSQL
+
+Current transform example: `hello -> olleh`.
 
 ## Prerequisites
 
 - Java 21
 - Maven
-- Docker Desktop
-- `.env` in the project root (see `.env.example`)
+- PowerShell
+- Docker Desktop running
 
-```env
-INTERNAL_TOKEN=super-internal-token
-JWT_SECRET=0123456789abcdef0123456789abcdef
-```
+Create a local `.env` file based on [`.env.example`](./.env.example).
 
 ## Quick Start
+
+Build both services:
 
 ```powershell
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
+```
+
+Start the stack:
+
+```powershell
 docker compose up -d --build
 docker compose ps
 ```
 
-Health checks:
-
-```powershell
-curl.exe -fsS http://localhost:8080/health
-curl.exe -fsS http://localhost:8081/health
-```
-
-Ports:
-
-| Service   | URL                     |
-|-----------|-------------------------|
-| auth-api  | http://localhost:8080   |
-| data-api  | http://localhost:8081   |
-| postgres  | localhost:5432          |
-
-## Run Example
-
-### 1. Register
-
-```powershell
-curl.exe -X POST http://localhost:8080/api/auth/register `
-  -H "Content-Type: application/json" `
-  -d "{\"email\":\"a@a.com\",\"password\":\"pass\"}"
-```
-
-Expected: `201`
-
-### 2. Login
-
-```powershell
-curl.exe -X POST http://localhost:8080/api/auth/login `
-  -H "Content-Type: application/json" `
-  -d "{\"email\":\"a@a.com\",\"password\":\"pass\"}"
-```
-
-Expected: `200` with `{ "token": "..." }`. Save the token.
-
-### 3. Process
-
-```powershell
-curl.exe -X POST http://localhost:8080/api/process `
-  -H "Authorization: Bearer <token>" `
-  -H "Content-Type: application/json" `
-  -d "{\"text\":\"hello\"}"
-```
-
-Expected:
-
-```json
-{ "result": "olleh" }
-```
-
-A row is written to `processing_log` (`user_id`, `input_text`, `output_text`, `created_at`).
-
-### 4. Negative checks
-
-Without JWT → rejected:
-
-```powershell
-curl.exe -X POST http://localhost:8080/api/process `
-  -H "Content-Type: application/json" `
-  -d "{\"text\":\"hello\"}"
-```
-
-Direct call to `data-api` without `X-Internal-Token` → `403`:
-
-```powershell
-curl.exe -X POST http://localhost:8081/api/transform `
-  -H "Content-Type: application/json" `
-  -d "{\"text\":\"hello\"}"
-```
-
-## Automated Smoke Test
+Run the recommended verification flow:
 
 ```powershell
 .\scripts\smoke.ps1
 ```
 
-Covers register → login → process, plus both negative checks above.
+Stop the stack:
 
-## Docs
+```powershell
+docker compose down
+```
 
-- [Architecture](./docs/architecture.md)
+## Endpoints
+
+- [`auth-api`](./auth-api): <http://localhost:8080>
+- [`data-api`](./data-api): <http://localhost:8081>
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+
+Health response examples:
+- `{"status":"ok","service":"auth-api"}`
+- `{"status":"ok","service":"data-api"}`
+
+## Documentation
+
+- [Architecture overview](./docs/architecture.md)
 - [Technical decisions](./docs/decisions.md)
-- [Verification](./docs/verification.md)
-- [Known issues](./KNOWN-ISSUES.md)
-- [Contributing](./CONTRIBUTING.md)
-- [Security](./SECURITY.md)
+- [Verification guide](./docs/verification.md)
+- [Known issues and trade-offs](./KNOWN-ISSUES.md)
+- [Contributing notes](./CONTRIBUTING.md)
+- [Security policy](./SECURITY.md)
+- [Smoke test script](./scripts/smoke.ps1)
 
 ## Notes
 
-- Passwords are stored with BCrypt; secrets/tokens are not logged.
-- Schema is created by Flyway on `auth-api` startup.
-- `auth-api` reaches `data-api` at `http://data-api:8081` on the Docker network.
-- Env vars used: Postgres credentials, `JWT_SECRET`, `INTERNAL_TOKEN`.
-
-## License
-
-MIT — see [LICENSE](./LICENSE).
+- [`data-api`](./data-api) is intentionally internal and rejects requests without a valid `X-Internal-Token`.
+- Processing logs are stored in the `processinglog` table.
+- The current log model stores `user_email`, `input_text`, `output_text`, and `created_at`.
+- Flyway migrations are applied by [`auth-api`](./auth-api) on startup.
