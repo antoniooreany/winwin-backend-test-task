@@ -7,7 +7,7 @@ Related documents:
 - [Verification guide](./docs/verification.md)
 - [Contributing notes](./CONTRIBUTING.md)
 - [Security policy](./SECURITY.md)
-- [Smoke test script](./scripts/smoke.ps1)
+- [Local verification script](./scripts/verify-local.ps1)
 - [Changelog](./CHANGELOG.md)
 
 ## 1. Minimal assignment scope
@@ -42,7 +42,7 @@ Direct calls to `POST /api/transform` without a valid `X-Internal-Token` are exp
 
 ## 4. Smoke verification is lightweight by design
 
-[`scripts/smoke.ps1`](./scripts/smoke.ps1) is intended as a fast local confidence check.
+[`scripts/verify-local.ps1`](./scripts/verify-local.ps1) is intended as a fast local confidence check.
 
 It covers the main flow and key negative scenarios, but it is not a full integration or performance test suite.
 
@@ -60,3 +60,4 @@ Potential next steps:
 - add stronger validation and error handling coverage
 - add centralized structured logging
 - tighten production-facing security hardening
+

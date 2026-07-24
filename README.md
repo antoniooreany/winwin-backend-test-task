@@ -32,29 +32,50 @@ Before startup, create a local `.env` file based on [`.env.example`](./.env.exam
 
 ## Quick Start
 
-Build both services:
+### 1. Build `auth-api`
+
+```powershell
+mvn -f auth-api/pom.xml clean package -DskipTests
+```
+
+### 2. Build `data-api`
+
+```powershell
+mvn -f data-api/pom.xml clean package -DskipTests
+```
+
+### 3. Start the stack
+
+```powershell
+docker compose up -d --build
+```
+
+### 4. Check running containers
+
+```powershell
+docker compose ps
+```
+
+### 5. Run the recommended local verification flow
+
+```powershell
+.\scripts\verify-local.ps1
+```
+
+### 6. Stop the stack
+
+```powershell
+docker compose down
+```
+
+### Optional full sequence
 
 ```powershell
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
-```
-
-Start the stack:
-
-```powershell
 docker compose up -d --build
 docker compose ps
-```
-
-Run the recommended verification flow:
-
-```powershell
-.\scripts\smoke.ps1
-```
-
-Stop the stack:
-
-```powershell
+.\scripts\verify-local.ps1
 docker compose down
 ```
 
@@ -79,7 +100,7 @@ Health response examples:
 - [Contributing notes](./CONTRIBUTING.md)
 - [Security policy](./SECURITY.md)
 - [Changelog](./CHANGELOG.md)
-- [Smoke test script](./scripts/smoke.ps1)
+- [Local verification script](./scripts/verify-local.ps1)
 
 ## Notes
 
@@ -87,3 +108,5 @@ Health response examples:
 - Processing logs are stored in the `processinglog` table.
 - The current log model stores `user_email`, `input_text`, `output_text`, and `created_at`.
 - Flyway migrations are applied by [`auth-api`](./auth-api) on startup.
+
+
