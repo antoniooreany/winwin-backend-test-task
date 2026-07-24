@@ -8,7 +8,7 @@ Technical rationale: [Technical decisions](./decisions.md)
 Known limitations: [KNOWN-ISSUES.md](../KNOWN-ISSUES.md)  
 Local workflow: [CONTRIBUTING.md](../CONTRIBUTING.md)  
 Security note: [SECURITY.md](../SECURITY.md)  
-Automated check: [scripts/smoke.ps1](../scripts/verify-local.ps1)
+Automated check: [scripts/verify-local.ps1](../scripts/verify-local.ps1)
 
 ## Verification Scope
 
@@ -158,5 +158,6 @@ Expected:
 - [`auth-api`](../auth-api) applies Flyway migrations on startup.
 - The current database table name is `processinglog`, not `processing_log`.
 - The current processing log stores `user_email`, not `user_id`.
-- For the shortest reproducible review path, prefer [scripts/smoke.ps1](../scripts/verify-local.ps1) over manual request-by-request verification.
+- For the shortest reproducible review path, prefer [scripts/verify-local.ps1](../scripts/verify-local.ps1) over manual request-by-request verification.
+
 
