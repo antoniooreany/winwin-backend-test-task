@@ -58,7 +58,7 @@ Expected response:
 
 ```json
 {
-  "result": "HELLO"
+  "result": "olleh"
 }
 ```
 
