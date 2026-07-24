@@ -12,7 +12,7 @@ Related documents:
 
 ## 1. Minimal assignment scope
 
-The implementation is intentionally compact and focused on the test task scope summarized in [README.md](./README.md), structured in [docs/architecture.md](./docs/architecture.md), and justified in [docs/decisions.md](./docs/decisions.md).
+The implementation is intentionally compact and focused on the test task scope.
 
 It currently covers:
 - registration
@@ -24,7 +24,7 @@ It currently covers:
 
 ## 2. Simplified processing log model
 
-The current persistence model is intentionally simple and should be read together with [docs/architecture.md](./docs/architecture.md), [docs/verification.md](./docs/verification.md), and [README.md](./README.md).
+The current persistence model is intentionally simple.
 
 The `processinglog` table stores:
 - `user_email`
@@ -32,25 +32,25 @@ The `processinglog` table stores:
 - `output_text`
 - `created_at`
 
-A more production-oriented version could store `user_id`, request metadata, and richer audit information. This trade-off is also reflected in [docs/decisions.md](./docs/decisions.md).
+A more production-oriented version could store `user_id`, request metadata, and richer audit information.
 
 ## 3. data-api is intentionally internal
 
 [`data-api`](./data-api) is designed to be called by [`auth-api`](./auth-api), not by external clients.
 
-Direct calls to `POST /api/transform` without a valid `X-Internal-Token` are expected to fail with `403`, as verified in [docs/verification.md](./docs/verification.md) and described in [docs/architecture.md](./docs/architecture.md).
+Direct calls to `POST /api/transform` without a valid `X-Internal-Token` are expected to fail with `403`.
 
 ## 4. Smoke verification is lightweight by design
 
 [`scripts/smoke.ps1`](./scripts/smoke.ps1) is intended as a fast local confidence check.
 
-It covers the main flow and key negative scenarios from [README.md](./README.md) and [docs/verification.md](./docs/verification.md), but it is not a full integration or performance test suite. Change expectations for this script should stay aligned with [CONTRIBUTING.md](./CONTRIBUTING.md) and [CHANGELOG.md](./CHANGELOG.md).
+It covers the main flow and key negative scenarios, but it is not a full integration or performance test suite.
 
 ## 5. Reviewer path is optimized for PowerShell on Windows
 
 The documentation intentionally uses PowerShell-native commands.
 
-This avoids quoting and escaping problems that can appear with manual `curl.exe` calls in Windows PowerShell. This convention is also reflected in [README.md](./README.md), [docs/verification.md](./docs/verification.md), and [CONTRIBUTING.md](./CONTRIBUTING.md).
+This avoids quoting and escaping problems that can appear with manual HTTP calls in Windows PowerShell.
 
 ## 6. Possible future improvements
 
@@ -60,5 +60,3 @@ Potential next steps:
 - add stronger validation and error handling coverage
 - add centralized structured logging
 - tighten production-facing security hardening
-
-These items should be interpreted as future improvements, not missing assignment scope, and should remain consistent with [docs/decisions.md](./docs/decisions.md), [SECURITY.md](./SECURITY.md), and [CHANGELOG.md](./CHANGELOG.md).

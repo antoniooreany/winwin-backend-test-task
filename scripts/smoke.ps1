@@ -1,214 +1,145 @@
 $ErrorActionPreference = "Stop"
 
-function Write-Result {
-    param(
-        [string]$Status,
-        [string]$Message
-    )
-    Write-Host "[$Status] $Message"
-}
-
-function Invoke-JsonRequest {
-    param(
-        [string]$Method,
-        [string]$Uri,
-        [object]$Body = $null,
-        [hashtable]$Headers = @{}
-    )
-
-    $params = @{
-        Method      = $Method
-        Uri         = $Uri
-        Headers     = $Headers
-        ErrorAction = "Stop"
-    }
-
-    if ($null -ne $Body) {
-        $params["ContentType"] = "application/json"
-        $params["Body"] = ($Body | ConvertTo-Json -Compress)
-    }
-
-    Invoke-RestMethod @params
-}
-
 $passed = 0
 $failed = 0
+$email = "reviewer+$([guid]::NewGuid().ToString('N').Substring(0,8))@example.com"
+$password = "Pass12345!"
+$report = ".\smoke-report.txt"
 
-Write-Host ""
-Write-Host "== Git sanity check =="
-git status --short
-if ($LASTEXITCODE -eq 0) {
-    Write-Result "PASS" "Git status checked"
-    $passed++
-} else {
-    Write-Result "FAIL" "Git status could not be checked"
-    $failed++
+Remove-Item $report -ErrorAction SilentlyContinue
+
+function Log($msg) { $msg | Tee-Object -FilePath $report -Append }
+function Pass($msg) { $script:passed++; Log "[PASS] $msg" }
+function Fail($msg) { $script:failed++; Log "[FAIL] $msg" }
+function Section($msg) { Log ""; Log "== $msg ==" }
+
+function Get-JsonCurl {
+    param([string]$Method,[string]$Url,[string]$Body = "",[string[]]$Headers = @())
+    $args = @("-sS", "-X", $Method, $Url)
+    foreach ($h in $Headers) { $args += @("-H", $h) }
+    if ($Body -ne "") { $args += @("-d", $Body) }
+    & curl.exe @args
 }
 
-Write-Host ""
-Write-Host "== Ensure service JAR files exist =="
+function Get-StatusCurl {
+    param([string]$Method,[string]$Url,[string]$Body = "",[string[]]$Headers = @())
+    $args = @("-sS", "-o", "NUL", "-w", "%{http_code}", "-X", $Method, $Url)
+    foreach ($h in $Headers) { $args += @("-H", $h) }
+    if ($Body -ne "") { $args += @("-d", $Body) }
+    [int](& curl.exe @args)
+}
+
+Section "Git sanity check"
+git status --short | Tee-Object -FilePath $report -Append | Out-Host
+Pass "Git status checked"
+
+Section "Build services"
+mvn -f auth-api/pom.xml clean package -DskipTests | Tee-Object -FilePath $report -Append | Out-Host
+if ($LASTEXITCODE -ne 0) { Fail "auth-api build failed"; exit 1 } else { Pass "auth-api built successfully" }
+
+mvn -f data-api/pom.xml clean package -DskipTests | Tee-Object -FilePath $report -Append | Out-Host
+if ($LASTEXITCODE -ne 0) { Fail "data-api build failed"; exit 1 } else { Pass "data-api built successfully" }
+
+Section "Ensure service JAR files exist"
 if ((Test-Path ".\auth-api\target\auth-api-0.0.1-SNAPSHOT.jar") -and (Test-Path ".\data-api\target\data-api-0.0.1-SNAPSHOT.jar")) {
-    Write-Result "PASS" "Required JAR files are available"
-    $passed++
+    Pass "Required JAR files are available"
 } else {
-    Write-Result "FAIL" "Required JAR files are missing. Build the services first."
-    $failed++
+    Fail "Required JAR files are missing"
     exit 1
 }
 
-Write-Host ""
-Write-Host "== Docker Compose reset =="
-docker compose down -v
-docker compose up -d --build
-if ($LASTEXITCODE -eq 0) {
-    Write-Result "PASS" "Docker Compose started"
-    $passed++
-} else {
-    Write-Result "FAIL" "Docker Compose startup failed"
-    $failed++
-    exit 1
-}
+Section "Docker Compose reset"
+docker compose down -v | Tee-Object -FilePath $report -Append | Out-Host
+docker compose up -d --build | Tee-Object -FilePath $report -Append | Out-Host
+if ($LASTEXITCODE -eq 0) { Pass "Docker Compose started" } else { Fail "Docker Compose startup failed"; exit 1 }
 
-Write-Host ""
-Write-Host "== Wait for services =="
+Section "Wait for services"
 $authReady = $false
 $dataReady = $false
 
-for ($i = 0; $i -lt 30; $i++) {
+for ($i = 0; $i -lt 60; $i++) {
     try {
-        $authHealth = Invoke-RestMethod -Method GET -Uri "http://localhost:8080/health" -ErrorAction Stop
-        if ($authHealth.status -eq "ok" -and $authHealth.service -eq "auth-api") {
-            $authReady = $true
-            break
-        }
+        $auth = (& curl.exe -fsS "http://localhost:8080/health") | ConvertFrom-Json
+        if ($auth.status -eq "ok" -and $auth.service -eq "auth-api") { $authReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
 }
 
-for ($i = 0; $i -lt 30; $i++) {
+for ($i = 0; $i -lt 60; $i++) {
     try {
-        $dataHealth = Invoke-RestMethod -Method GET -Uri "http://localhost:8081/health" -ErrorAction Stop
-        if ($dataHealth.status -eq "ok" -and $dataHealth.service -eq "data-api") {
-            $dataReady = $true
-            break
-        }
+        $data = (& curl.exe -fsS "http://localhost:8081/health") | ConvertFrom-Json
+        if ($data.status -eq "ok" -and $data.service -eq "data-api") { $dataReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
 }
 
-if ($authReady) { Write-Result "PASS" "auth-api health is ready"; $passed++ } else { Write-Result "FAIL" "auth-api health is not ready"; $failed++ }
-if ($dataReady) { Write-Result "PASS" "data-api health is ready"; $passed++ } else { Write-Result "FAIL" "data-api health is not ready"; $failed++ }
+if ($authReady) { Pass "auth-api health is ready" } else { Fail "auth-api health is not ready" }
+if ($dataReady) { Pass "data-api health is ready" } else { Fail "data-api health is not ready" }
 
 if (-not ($authReady -and $dataReady)) {
-    docker compose logs
-    docker compose down
+    docker compose logs | Tee-Object -FilePath $report -Append | Out-Host
+    docker compose down | Tee-Object -FilePath $report -Append | Out-Host
     exit 1
 }
 
-Write-Host ""
-Write-Host "== Register user =="
-$email = "reviewer@example.com"
-$password = "Pass12345!"
-try {
-    $null = Invoke-WebRequest -Method POST -Uri "http://localhost:8080/api/auth/register" -ContentType "application/json" -Body (@{ email = $email; password = $password } | ConvertTo-Json -Compress) -ErrorAction Stop
-    Write-Result "PASS" "User registration request succeeded"
-    $passed++
-} catch {
-    Write-Result "FAIL" "User registration request failed"
-    $failed++
-}
+Section "Register user"
+$registerBody = "{""email"":""$email"",""password"":""$password""}"
+$registerStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8080/api/auth/register" -Body $registerBody -Headers @("Content-Type: application/json")
+if ($registerStatus -eq 201) { Pass "Registration returned HTTP 201" } else { Fail "Registration returned HTTP $registerStatus" }
 
-Write-Host ""
-Write-Host "== Login user =="
-$token = $null
+Section "Login user"
+$loginBody = "{""email"":""$email"",""password"":""$password""}"
 try {
-    $login = Invoke-JsonRequest -Method POST -Uri "http://localhost:8080/api/auth/login" -Body @{ email = $email; password = $password }
+    $login = (Get-JsonCurl -Method "POST" -Url "http://localhost:8080/api/auth/login" -Body $loginBody -Headers @("Content-Type: application/json")) | ConvertFrom-Json
     $token = $login.token
-    if ($token) {
-        Write-Result "PASS" "Login request succeeded"
-        $passed++
-        Write-Result "PASS" "JWT token received"
-        $passed++
-    } else {
-        Write-Result "FAIL" "JWT token was not returned"
-        $failed++
-    }
+    if ($token) { Pass "Login returned JWT token" } else { Fail "Login response did not contain token" }
 } catch {
-    Write-Result "FAIL" "Login request failed"
-    $failed++
+    Fail "Login request failed"
 }
 
-Write-Host ""
-Write-Host "== Call protected process endpoint =="
+Section "Call protected process endpoint"
+$processBody = "{""text"":""hello""}"
 try {
-    $process = Invoke-JsonRequest -Method POST -Uri "http://localhost:8080/api/process" -Headers @{ Authorization = "Bearer $token" } -Body @{ text = "hello" }
-    if ($null -ne $process) {
-        Write-Result "PASS" "Protected endpoint accepted JWT"
-        $passed++
-        Write-Result "PASS" "Protected endpoint returned a response body"
-        $passed++
-    } else {
-        Write-Result "FAIL" "Protected endpoint returned no body"
-        $failed++
-    }
+    $process = (Get-JsonCurl -Method "POST" -Url "http://localhost:8080/api/process" -Body $processBody -Headers @("Authorization: Bearer $token", "Content-Type: application/json")) | ConvertFrom-Json
+    if ($process.result -eq "olleh") { Pass "Protected endpoint returned expected result" } else { Fail "Protected endpoint returned unexpected result: $($process.result)" }
 } catch {
-    Write-Result "FAIL" "Protected endpoint request failed"
-    $failed++
+    Fail "Protected endpoint request failed"
 }
 
-Write-Host ""
-Write-Host "== Negative check without JWT =="
-try {
-    $null = Invoke-JsonRequest -Method POST -Uri "http://localhost:8080/api/process" -Body @{ text = "hello" }
-    Write-Result "FAIL" "Protected endpoint accepted request without JWT"
-    $failed++
-} catch {
-    $code = $null
-    try { $code = [int]$_.Exception.Response.StatusCode } catch {}
-    if ($code -eq 403) {
-        Write-Result "PASS" "Protected endpoint correctly rejected request without JWT (403)"
-        $passed++
-    } else {
-        Write-Result "FAIL" "Protected endpoint rejected request, but status was not 403"
-        $failed++
-    }
-}
-
-Write-Host ""
-Write-Host "== Negative check: direct access to data-api =="
-try {
-    $null = Invoke-JsonRequest -Method POST -Uri "http://localhost:8081/api/transform" -Body @{ text = "hello" }
-    Write-Result "FAIL" "data-api accepted direct request without internal token"
-    $failed++
-} catch {
-    $code = $null
-    try { $code = [int]$_.Exception.Response.StatusCode } catch {}
-    if ($code -eq 403) {
-        Write-Result "PASS" "data-api correctly rejected direct access without internal token (403)"
-        $passed++
-    } else {
-        Write-Result "FAIL" "data-api rejected request, but status was not 403"
-        $failed++
-    }
-}
-
-Write-Host ""
-Write-Host "=============================="
-Write-Host "Smoke Test Summary"
-Write-Host "Passed: $passed"
-Write-Host "Failed: $failed"
-if ($failed -eq 0) {
-    Write-Host "RESULT: PASS"
+Section "Database verification"
+$pgContainer = docker compose ps -q postgres
+if (-not $pgContainer) {
+    Fail "Postgres container not found"
 } else {
-    Write-Host "RESULT: FAIL"
+    $dbQuery = "SELECT id, user_email, input_text, output_text, created_at FROM processinglog ORDER BY created_at DESC LIMIT 5;"
+    docker exec $pgContainer psql -U appuser -d appdb -c $dbQuery | Tee-Object -FilePath $report -Append | Out-Host
+    $dbOutput = docker exec $pgContainer psql -U appuser -d appdb -t -A -F "|" -c $dbQuery
+    if ($dbOutput -match [regex]::Escape($email) -and $dbOutput -match "hello" -and $dbOutput -match "olleh") {
+        Pass "processinglog contains expected persisted row"
+    } else {
+        Fail "processinglog does not contain expected persisted row"
+    }
 }
 
-Write-Host ""
-Write-Host "== Docker Compose shutdown =="
-docker compose down
-if ($LASTEXITCODE -eq 0) {
-    Write-Result "PASS" "Docker Compose stopped"
-} else {
-    Write-Result "FAIL" "Docker Compose shutdown failed"
-}
-Write-Host "=============================="
+Section "Negative check without JWT"
+$noJwtStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8080/api/process" -Body $processBody -Headers @("Content-Type: application/json")
+if ($noJwtStatus -eq 401 -or $noJwtStatus -eq 403) { Pass "Protected endpoint correctly rejected request without JWT ($noJwtStatus)" } else { Fail "Protected endpoint returned unexpected status without JWT: $noJwtStatus" }
+
+Section "Negative check: direct access to data-api"
+$directStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8081/api/transform" -Body $processBody -Headers @("Content-Type: application/json")
+if ($directStatus -eq 403) { Pass "data-api correctly rejected direct access without internal token (403)" } else { Fail "data-api returned unexpected status without internal token: $directStatus" }
+
+Section "Negative check: wrong internal token"
+$wrongTokenStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8081/api/transform" -Body $processBody -Headers @("Content-Type: application/json", "X-Internal-Token: wrong-token")
+if ($wrongTokenStatus -eq 403) { Pass "data-api correctly rejected wrong internal token (403)" } else { Fail "data-api returned unexpected status with wrong internal token: $wrongTokenStatus" }
+
+Section "Docker Compose shutdown"
+docker compose down | Tee-Object -FilePath $report -Append | Out-Host
+Pass "Docker Compose stopped"
+
+Log ""
+Log "=============================="
+Log "Smoke Test Summary"
+Log "Passed: $passed"
+Log "Failed: $failed"
+if ($failed -eq 0) { Log "RESULT: PASS" } else { Log "RESULT: FAIL"; exit 1 }
