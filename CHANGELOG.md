@@ -16,6 +16,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - aligned schema references to `processinglog`
 - clarified verification flow and smoke-test usage
 
+## [0.3.0] - 2026-07-25
+
+### Added
+
+- verification guide aligned with the current reviewer path and the `scripts/verify-local.ps1` entry point
+- current verification script set for local validation:
+  - `scripts/verify-local.ps1`
+  - `scripts/check-auth-flow.ps1`
+  - `scripts/check-internal-token.ps1`
+  - `scripts/full-verification.ps1`
+  - `scripts/run-all-checks.ps1`
+- `KNOWN-ISSUES.md` to document accepted limitations and explicit trade-offs for the current repository snapshot
+- Flyway migration `V1__create_auth_tables.sql` to make auth-related schema creation explicit and reproducible on startup
+
+### Changed
+
+- README aligned with the current project structure, verification path, and release context
+- `.env.example` and `docker-compose.yml` aligned with the reviewer-friendly local setup
+- documentation wording refined across `README.md`, `docs/verification.md`, `docs/architecture.md`, and `docs/decisions.md`
+- local verification flow standardized around PowerShell-first commands
+- processing behavior documented as reverse-text processing (`hello -> olleh`)
+- persistence wording aligned with the actual `processinglog` table and current column model
+
+### Notes
+
+- `0.3.0` is the current stable reviewer-facing release
+- earlier releases (`0.2.0`, `0.1.0`, `0.1.0-rc1`) remain available for historical context
+
 ## [0.2.0] - 2026-07-20
 
 ### Added

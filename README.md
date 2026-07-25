@@ -2,6 +2,16 @@
 
 Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
+## Release status
+
+Current stable release: **v0.3.0**  
+Previous stable releases: `v0.2.0`, `v0.1.0`  
+Earlier pre-release: `v0.1.0-rc1`
+
+Release `v0.3.0` finalizes the reviewer-facing documentation, aligns the local verification flow with the current project structure, and documents the current Docker-based verification path, Flyway-backed startup, and processing log behavior.
+
+For published release notes, see the [Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases) page. For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
+
 ## Overview
 
 The project includes:
@@ -81,7 +91,7 @@ All three services (`auth-api`, `data-api`, `postgres`) should be running, and P
 .\scripts\verify-local.ps1
 ```
 
-This script performs a smoke test of the main flow and negative scenarios.
+This script performs the shortest reproducible verification flow for the current stable release and covers the main runtime path together with key negative scenarios.
 
 ### 6. Stop the stack
 

@@ -1,5 +1,7 @@
 # Verification Guide
 
+This guide matches the current stable release: **v0.3.0**.
+
 This document describes how to verify the project locally using PowerShell commands and the provided verification script.
 
 Project entry point: [README.md](../README.md)  
@@ -13,6 +15,8 @@ Automated check: [scripts/verify-local.ps1](../scripts/verify-local.ps1)
 ## Verification scope
 
 This guide validates the main runtime path summarized in [README.md](../README.md). Scope limitations and simplifications are documented in [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
+
+For the shortest and most reproducible reviewer path, use the current verification script entry point for release `v0.3.0`: [scripts/verify-local.ps1](../scripts/verify-local.ps1).
 
 ## Prerequisites
 
@@ -43,11 +47,11 @@ This script validates:
 - rejection of direct access to [`data-api`](../data-api)
 - rejection with a wrong internal token
 
-It is the shortest reproducible verification path for this repository.
+It is the shortest reproducible verification path for this repository and the primary verification entry point for release `v0.3.0`.
 
 ## Manual verification (optional)
 
-Manual verification is optional and intended only as an additional aid for reviewers who prefer step‑by‑step checks. For the shortest and most reproducible path, prefer the automated [scripts/verify-local.ps1](../scripts/verify-local.ps1) script.
+Manual verification is optional and intended only as an additional aid for reviewers who prefer step-by-step checks. For the shortest and most reproducible path, prefer the automated [scripts/verify-local.ps1](../scripts/verify-local.ps1) script.
 
 If you still want to verify endpoints manually, you can use any HTTP client you prefer (for example `curl`, PowerShell `Invoke-RestMethod`, Postman or a similar tool). The following examples use PowerShell syntax, but any equivalent HTTP client is acceptable.
 

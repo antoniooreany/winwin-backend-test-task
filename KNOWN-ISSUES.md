@@ -1,5 +1,7 @@
 # Known Issues and Trade-offs
 
+This document reflects the accepted trade-offs of the current stable release: **v0.3.0**.
+
 Related documents:
 - [README.md](./README.md)
 - [Architecture overview](./docs/architecture.md)
@@ -40,11 +42,11 @@ A more production-oriented version could store `user_id`, request metadata, and 
 
 Direct calls to `POST /api/transform` without a valid `X-Internal-Token` are expected to fail with `403`.
 
-## 4. Smoke verification is lightweight by design
+## 4. Verification is lightweight by design
 
-[`scripts/verify-local.ps1`](./scripts/verify-local.ps1) is intended as a fast local confidence check.
+[`scripts/verify-local.ps1`](./scripts/verify-local.ps1) is intended as a fast local confidence check and the primary reviewer path for release `v0.3.0`.
 
-It covers the main flow and key negative scenarios, but it is not a full integration or performance test suite.
+It covers the main flow and key negative scenarios, but it is not a full integration, load, or performance test suite.
 
 ## 5. Reviewer path is optimized for PowerShell on Windows
 
@@ -52,7 +54,13 @@ The documentation intentionally uses PowerShell-native commands.
 
 This avoids quoting and escaping problems that can appear with manual HTTP calls in Windows PowerShell.
 
-## 6. Possible future improvements
+## 6. Release-oriented documentation is intentionally concise
+
+The top-level README is intentionally short and acts as a navigation entry point.
+
+More detailed rationale and validation steps live in `docs/verification.md`, `docs/architecture.md`, and `docs/decisions.md`.
+
+## 7. Possible future improvements
 
 Potential next steps:
 - store `user_id` in logs instead of `user_email`
@@ -60,4 +68,3 @@ Potential next steps:
 - add stronger validation and error handling coverage
 - add centralized structured logging
 - tighten production-facing security hardening
-
