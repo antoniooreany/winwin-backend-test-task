@@ -47,7 +47,9 @@ It is the shortest reproducible verification path for this repository.
 
 ## Manual verification (optional)
 
-Manual verification is optional and provided only as an additional reviewer aid. The recommended way to verify the project is to use [scripts/verify-local.ps1](../scripts/verify-local.ps1).
+Manual verification is optional and intended only as an additional aid for reviewers who prefer step‑by‑step checks. For the shortest and most reproducible path, prefer the automated [scripts/verify-local.ps1](../scripts/verify-local.ps1) script.
+
+If you still want to verify endpoints manually, you can use any HTTP client you prefer (for example `curl`, PowerShell `Invoke-RestMethod`, Postman or a similar tool). The following examples use PowerShell syntax, but any equivalent HTTP client is acceptable.
 
 ### 1. Clean start
 
@@ -82,8 +84,8 @@ If you want to repeat the authentication flow manually, use any HTTP client such
 
 Manual flow:
 
-1. Send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
-2. Send `POST http://localhost:8080/api/auth/login` with the same JSON body.
+1. Register: send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
+2. Login: send `POST http://localhost:8080/api/auth/login` with the same JSON body.
 3. Extract the returned JWT token from the login response.
 
 Expected:
@@ -110,7 +112,17 @@ A successful request should also create a new row in the `processinglog` table.
 
 ### 5. Database verification
 
-After a successful protected processing request, check persisted rows in PostgreSQL:
+There are two ways to verify persistence.
+
+#### Option A: verification through the provided script
+
+The recommended script [scripts/verify-local.ps1](../scripts/verify-local.ps1) already performs a protected processing request and verifies that the expected row is persisted in PostgreSQL during its execution.
+
+Use this option if you want the shortest reproducible reviewer path.
+
+#### Option B: manual SQL inspection in a running stack
+
+If you want to inspect the database manually, keep the Docker Compose stack running, complete a successful protected processing request, and then query PostgreSQL:
 
 ```powershell
 docker exec winwin-backend-test-task-postgres-1 psql -U appuser -d appdb -c "SELECT id, user_email, input_text, output_text, created_at FROM processinglog ORDER BY id DESC LIMIT 5;"
@@ -121,7 +133,12 @@ Expected:
 - at least one row appears after a successful `POST /api/process` request
 - the inserted row contains `user_email`, input text, output text, and timestamp
 
-If the query returns `(0 rows)`, no successful processing request has been persisted yet. In that case, first complete the registration, login, and protected processing steps, or run [scripts/verify-local.ps1](../scripts/verify-local.ps1).
+If the query returns `(0 rows)`, no successful protected processing request has been persisted in the currently running stack yet. Make sure you have:
+
+- registered and logged in to obtain a valid JWT, and
+- successfully called `POST /api/process`
+
+before querying the `processinglog` table.
 
 ### 6. Negative scenario: no JWT
 
