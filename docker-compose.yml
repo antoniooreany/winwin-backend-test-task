@@ -30,7 +30,7 @@ services:
       SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: apppass
       DATA_API_BASE_URL: http://data-api:8081
-      DATA_API_INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
       JWT_SECRET: 0123456789abcdef0123456789abcdef
     ports:
       - "8080:8080"
