@@ -1,335 +1,127 @@
 # WinWin Backend Test Task
 
-Backend take-home assignment implementation for WinWin.travel.
-
-## Project Context
-
-This repository contains my solution for a backend engineering test task.
-
-The project includes:
-- `auth-api` — registration, login, JWT-based authentication, protected processing endpoint, and PostgreSQL persistence.
-- `data-api` — internal text transformation service protected by a shared internal token.
-- `postgres` — persistence layer for users and processing logs.
-- `docker-compose.yml` — local orchestration for both services and PostgreSQL.
-
-The goal is to provide a minimal but clear implementation of authentication, internal service-to-service communication, deterministic database startup, and Docker-based local execution.
+Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Overview
 
-The project contains two Spring Boot services running locally with Docker Compose and PostgreSQL:
+The project includes:
 
-- `auth-api` — handles registration, login, JWT-based authentication, and the protected client-facing processing endpoint.
-- `data-api` — internal service used by `auth-api` for text transformation.
-- `postgres` — persistence layer for users and processing logs.
+- [`auth-api`](./auth-api) — public API for registration, login, JWT authentication, and protected processing
+- [`data-api`](./data-api) — internal text transformation service protected by `X-Internal-Token`
+- [PostgreSQL](https://www.postgresql.org/) — persistence layer for users and processing logs
 
-## Architecture
+For more detail, see [Architecture overview](./docs/architecture.md), [Technical decisions](./docs/decisions.md), [Verification guide](./docs/verification.md), and [Known issues and trade-offs](./KNOWN-ISSUES.md).
 
-### auth-api
+## Main flow
 
-Responsibilities:
-- register users;
-- authenticate users and issue JWT tokens;
-- expose a protected `POST /api/process` endpoint;
-- call `data-api` through an internal request;
-- store a processing log entry in PostgreSQL.
+1. A user registers in [`auth-api`](./auth-api).
+2. A user logs in and receives a JWT token.
+3. The user calls `POST /api/process`.
+4. [`auth-api`](./auth-api) calls [`data-api`](./data-api).
+5. The transformed result is returned to the client and stored in PostgreSQL.
 
-### data-api
+Current transform example: `hello -> olleh`.
 
-Responsibilities:
-- expose the transformation endpoint used by `auth-api`;
-- validate the shared internal token header;
-- process incoming text and return the transformed value.
+## Getting started
 
-### postgres
+### 1. Clone the repository
 
-Stores:
-- `users`
-- `processing_log`
-
-## Tech Stack
-
-- Java 21
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- Maven
-- PostgreSQL
-- Docker Compose
-- Flyway
-
-## Project Structure
-
-```text
-.
-├── auth-api
-├── data-api
-├── docker-compose.yml
-├── scripts
-└── README.md
+```powershell
+git clone https://github.com/antoniooreany/winwin-backend-test-task.git
+cd winwin-backend-test-task
+git status
 ```
 
-## Run Locally
+### 2. Prerequisites
 
-Build both services:
+- Java 21
+- Maven
+- PowerShell
+- Docker Desktop running
 
-```bash
+Before startup, create a local `.env` file based on `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Fill in the placeholder values with your local settings.
+
+## Quick start
+
+### 1. Build `auth-api`
+
+```powershell
 mvn -f auth-api/pom.xml clean package -DskipTests
+```
+
+### 2. Build `data-api`
+
+```powershell
 mvn -f data-api/pom.xml clean package -DskipTests
 ```
 
-Start the full stack:
+### 3. Start the stack
 
-```bash
+```powershell
 docker compose up -d --build
 ```
 
-Check container status:
+### 4. Check running containers
 
-```bash
+```powershell
 docker compose ps
 ```
 
-Stop the stack:
+All three services (`auth-api`, `data-api`, `postgres`) should be running, and PostgreSQL should be healthy.
 
-```bash
+### 5. Run the recommended local verification flow
+
+```powershell
+.\scripts\verify-local.ps1
+```
+
+This script performs a smoke test of the main flow and negative scenarios.
+
+### 6. Stop the stack
+
+```powershell
 docker compose down
 ```
 
-Reset the database volume and start from a clean state:
-
-```bash
-docker compose down -v
-mvn -f auth-api/pom.xml clean package -DskipTests
-mvn -f data-api/pom.xml clean package -DskipTests
-docker compose up -d --build
-```
-
-## Expected Services
-
-After startup, the following services should be available:
-
-- `auth-api` — `http://localhost:8080`
-- `data-api` — `http://localhost:8081`
-- `postgres` — `localhost:5432`
-
-## Health Endpoints
-
-- `GET http://localhost:8080/health`
-- `GET http://localhost:8081/health`
-
-Example responses:
-
-```json
-{
-  "status": "ok",
-  "service": "auth-api"
-}
-```
-
-```json
-{
-  "status": "ok",
-  "service": "data-api"
-}
-```
-
-## API Flow
-
-### Register
-
-```text
-POST /api/auth/register
-Content-Type: application/json
-```
-
-Example request:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "Pass12345!"
-}
-```
-
-Expected behavior:
-- creates a new user;
-- stores the password in hashed form.
-
-### Login
-
-```text
-POST /api/auth/login
-Content-Type: application/json
-```
-
-Example request:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "Pass12345!"
-}
-```
-
-Example response:
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
-}
-```
-
-### Protected Processing
-
-```text
-POST /api/process
-Authorization: Bearer <JWT>
-Content-Type: application/json
-```
-
-Example request:
-
-```json
-{
-  "text": "hello"
-}
-```
-
-Example response:
-
-```json
-{
-  "result": "transformed text"
-}
-```
-
-Expected behavior:
-- validates the JWT in `auth-api`;
-- forwards the request to `data-api` using the internal token header;
-- returns the transformed result to the client;
-- stores a processing log record in PostgreSQL.
-
-## Manual Smoke Test
-
-### 1. Register a user
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Pass12345!"}'
-```
-
-### 2. Log in
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"Pass12345!"}'
-```
-
-Save the returned JWT token.
-
-### 3. Call the protected endpoint
-
-```bash
-curl -X POST http://localhost:8080/api/process \
-  -H "Authorization: Bearer <JWT>" \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected result:
-- transformed text is returned;
-- a new record is written to `processing_log`.
-
-### 4. Verify unauthorized access is rejected
-
-```bash
-curl -X POST http://localhost:8080/api/process \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected result:
-- request is rejected because no JWT is provided.
-
-### 5. Verify direct access to data-api is rejected without the internal token
-
-```bash
-curl -X POST http://localhost:8081/api/transform \
-  -H "Content-Type: application/json" \
-  -d '{"text":"hello"}'
-```
-
-Expected result:
-- request is rejected with `403 Forbidden`.
-
-## PowerShell Smoke Test
-
-A PowerShell smoke script can be run from the project root like this:
+### Optional full sequence
 
 ```powershell
-pwsh ./scripts/smoke.ps1
-```
-
-The current smoke flow passes successfully with a full local Docker Compose startup and API verification.
-
-A typical smoke test should:
-- start the Docker Compose stack;
-- wait until both services are available;
-- register a test user;
-- log in and obtain a JWT token;
-- call the protected `/api/process` endpoint with the token;
-- verify that the same endpoint rejects a request without JWT;
-- verify that `data-api` rejects direct access without a valid internal token;
-- print a final PASS/FAIL summary.
-
-## Database
-
-The PostgreSQL schema is initialized through Flyway migrations.
-
-Current approach:
-- versioned SQL migrations live under `src/main/resources/db/migration`;
-- schema creation is deterministic and works on a clean database;
-- application startup does not rely only on ad hoc local database state.
-
-This keeps local startup reproducible and easier to verify.
-
-## Useful Commands
-
-Show recent logs:
-
-```bash
-docker compose logs auth-api --tail 200
-docker compose logs data-api --tail 200
-docker compose logs postgres --tail 200
-```
-
-Follow logs in real time:
-
-```bash
-docker compose logs -f auth-api
-docker compose logs -f data-api
-```
-
-Restart the stack from scratch:
-
-```bash
-docker compose down -v
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
+docker compose ps
+.\scripts\verify-local.ps1
+docker compose down
 ```
 
-## Notes
+Detailed validation steps are available in the [Verification guide](./docs/verification.md).
 
-- `data-api` is intended for internal use only and should accept requests only when the shared `X-Internal-Token` header is valid.
-- passwords must be stored in hashed form.
-- secrets and tokens should not be logged.
-- the solution intentionally keeps the architecture simple and focused on the task requirements.
-- `spotless:check` may fail in this environment due to a `google-java-format` and JDK compatibility issue, so formatting was applied with IDE tooling.
+## Endpoints
 
-## License
+Available after the stack is started with `docker compose up -d --build`:
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+- `auth-api`: `http://localhost:8080`
+- `data-api`: `http://localhost:8081`
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
 
+Health response examples:
+
+- `{"status":"ok","service":"auth-api"}`
+- `{"status":"ok","service":"data-api"}`
+
+## Documentation map
+
+- [Architecture overview](./docs/architecture.md)
+- [Technical decisions](./docs/decisions.md)
+- [Verification guide](./docs/verification.md)
+- [Known issues and trade-offs](./KNOWN-ISSUES.md)
+- [Contributing notes](./CONTRIBUTING.md)
+- [Security policy](./SECURITY.md)
+- [Changelog](./CHANGELOG.md)
+- [Local verification script](./scripts/verify-local.ps1)

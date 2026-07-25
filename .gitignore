@@ -31,3 +31,15 @@ auth-api/src/main/resources/application.yml.bak
 conversation-exports/
 *.tmp
 *.bak
+
+.backup-docs/
+
+_winwin-backend-test-task/
+
+winwin-backend-test-task/
+
+winwin-backend-test-task/
+full-verification-report.txt
+.logs/
+**/target/
+smoke-report.txt

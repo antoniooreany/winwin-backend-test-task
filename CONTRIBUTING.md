@@ -1,57 +1,70 @@
 # Contributing
 
-Thanks for your interest in contributing to the WinWin Backend Test Task repository.
+This repository is primarily a backend test-task submission, but the following conventions are used to keep changes consistent and reviewable.
 
-This project is intentionally kept small and focused. Contributions should aim
-to improve clarity, correctness, or test coverage without overengineering.
+For the project overview and run instructions, see [README.md](./README.md). For verification steps and current behavior, see [docs/verification.md](./docs/verification.md). For current limitations and accepted trade-offs, see [KNOWN-ISSUES.md](./KNOWN-ISSUES.md). For runtime structure, see [docs/architecture.md](./docs/architecture.md). For implementation rationale, see [docs/decisions.md](./docs/decisions.md). For security expectations, see [SECURITY.md](./SECURITY.md). For visible repository history, see [CHANGELOG.md](./CHANGELOG.md).
 
-## Branching Model
+## Local Workflow
 
-The repository follows a GitFlow-style branching strategy:
+### 1. Build both services
 
-- `main` — stable releases
-- `develop` — integration branch
-- `feature/*` — new features or refactorings
-- `release/*` — release stabilization
-- `hotfix/*` — urgent fixes on top of production
+```powershell
+mvn -f auth-api/pom.xml clean package -DskipTests
+mvn -f data-api/pom.xml clean package -DskipTests
+```
 
-## Contribution Steps
+Build and startup expectations should remain aligned with [README.md](./README.md), [docs/verification.md](./docs/verification.md), and [docs/decisions.md](./docs/decisions.md).
 
-1. Create a feature branch from `develop`, for example:
-   - `feature/my-improvement`
-2. Implement the change and add or update tests.
-3. Ensure the build is green locally:
+### 2. Start the local stack
 
-   ```bash
-   mvn -f auth-api/pom.xml clean test
-   mvn -f data-api/pom.xml clean test
-   ```
+```powershell
+docker compose up -d --build
+```
 
-4. Push your feature branch to GitHub.
-5. Open a Pull Request into `develop`.
-6. Make sure the PR description explains:
-   - what was changed,
-   - why it was changed,
-   - how it was tested.
+Docker prerequisites are summarized in [README.md](./README.md), while the full reviewer path is described in [docs/verification.md](./docs/verification.md).
 
-## Code Style and Tests
+### 3. Verify the runtime state
 
-- Prefer clear, explicit code over “clever” solutions.
-- Every new behavior should be covered by tests (unit or integration).
-- Do not introduce new external dependencies without a clear need.
+- check both `/health` endpoints as described in [README.md](./README.md), [docs/verification.md](./docs/verification.md), and [CHANGELOG.md](./CHANGELOG.md)
+- run [scripts/smoke.ps1](./scripts/smoke.ps1)
+- verify auth and protected processing behavior manually when needed using the examples in [README.md](./README.md)
 
-## Commit Messages
+This quick path should stay consistent with [docs/verification.md](./docs/verification.md) and the runtime assumptions from [docs/architecture.md](./docs/architecture.md).
 
-- Use concise, descriptive messages (e.g. `feat:`, `fix:`, `test:`, `chore:`).
-- Group related changes into a single commit when possible.
+### 4. Review documentation and working tree changes
 
-## Reporting Issues
+```powershell
+git status --short
+git diff -- README.md KNOWN-ISSUES.md CONTRIBUTING.md SECURITY.md CHANGELOG.md docs/verification.md docs/architecture.md docs/decisions.md scripts/smoke.ps1
+```
 
-If you find a bug or inconsistency:
+Documentation should stay consistent across [README.md](./README.md), [KNOWN-ISSUES.md](./KNOWN-ISSUES.md), [docs/verification.md](./docs/verification.md), [docs/architecture.md](./docs/architecture.md), [docs/decisions.md](./docs/decisions.md), [SECURITY.md](./SECURITY.md), and [CHANGELOG.md](./CHANGELOG.md).
 
-1. Check existing issues and documentation.
-2. When opening a new issue, include:
-   - steps to reproduce,
-   - expected vs actual behavior,
-   - environment details (Java version, OS, etc.).
-   
+## Change Guidelines
+
+- keep the implementation aligned with the assignment scope described in [README.md](./README.md)
+- do not introduce unnecessary abstractions without also updating [docs/decisions.md](./docs/decisions.md)
+- do not document unverified behavior as completed; verification claims should remain aligned with [docs/verification.md](./docs/verification.md) and [scripts/smoke.ps1](./scripts/smoke.ps1)
+- do not log secrets, passwords, or tokens
+- keep documentation cross-links working and up to date across [README.md](./README.md), [docs/verification.md](./docs/verification.md), [docs/architecture.md](./docs/architecture.md), [docs/decisions.md](./docs/decisions.md), and [KNOWN-ISSUES.md](./KNOWN-ISSUES.md)
+
+## Documentation Policy
+
+When project behavior changes, update the relevant documents together:
+
+- [README.md](./README.md) for project overview, quick start, and documentation navigation
+- [docs/verification.md](./docs/verification.md) for the shortest reproducible validation path
+- [KNOWN-ISSUES.md](./KNOWN-ISSUES.md) for active limitations and accepted trade-offs
+- [docs/architecture.md](./docs/architecture.md) for runtime boundaries and request flow
+- [docs/decisions.md](./docs/decisions.md) for implementation rationale
+- [SECURITY.md](./SECURITY.md) for repository security expectations
+- [CHANGELOG.md](./CHANGELOG.md) when a reviewer-visible change is made
+- [scripts/smoke.ps1](./scripts/smoke.ps1) if the smoke flow itself changes
+
+## Database Note
+
+The PostgreSQL schema is Flyway-managed. If schema behavior changes, update [README.md](./README.md), [docs/verification.md](./docs/verification.md), [KNOWN-ISSUES.md](./KNOWN-ISSUES.md), [docs/architecture.md](./docs/architecture.md), [docs/decisions.md](./docs/decisions.md), and [CHANGELOG.md](./CHANGELOG.md) in the same change.
+
+## Verification Note
+
+The current quick verification path is [scripts/smoke.ps1](./scripts/smoke.ps1). Manual API checks from [README.md](./README.md) should remain runnable and consistent with [docs/verification.md](./docs/verification.md).
