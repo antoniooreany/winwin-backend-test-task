@@ -47,7 +47,9 @@ It is the shortest reproducible verification path for this repository.
 
 ## Manual verification (optional)
 
-Manual verification is optional and provided only as an additional reviewer aid. The recommended way to verify the project is to use [scripts/verify-local.ps1](../scripts/verify-local.ps1).
+Manual verification is optional and intended only as an additional aid for reviewers who prefer step‑by‑step checks. For the shortest and most reproducible path, prefer the automated [scripts/verify-local.ps1](../scripts/verify-local.ps1) script.
+
+If you still want to verify endpoints manually, you can use any HTTP client you prefer (for example `curl`, PowerShell `Invoke-RestMethod`, Postman or a similar tool). The following examples use PowerShell syntax, but any equivalent HTTP client is acceptable.
 
 ### 1. Clean start
 
@@ -82,8 +84,8 @@ If you want to repeat the authentication flow manually, use any HTTP client such
 
 Manual flow:
 
-1. Send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
-2. Send `POST http://localhost:8080/api/auth/login` with the same JSON body.
+1. Register: send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
+2. Login: send `POST http://localhost:8080/api/auth/login` with the same JSON body.
 3. Extract the returned JWT token from the login response.
 
 Expected:
