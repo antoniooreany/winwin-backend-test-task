@@ -39,3 +39,7 @@ _winwin-backend-test-task/
 winwin-backend-test-task/
 
 winwin-backend-test-task/
+full-verification-report.txt
+.logs/
+**/target/
+smoke-report.txt

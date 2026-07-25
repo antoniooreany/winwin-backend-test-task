@@ -1,6 +1,6 @@
 # Verification Guide
 
-This document describes how to verify the project locally using only PowerShell commands.
+This document describes how to verify the project locally using PowerShell commands and the provided verification script.
 
 Project entry point: [README.md](../README.md)  
 Architecture: [Architecture overview](./architecture.md)  
@@ -10,19 +10,20 @@ Local workflow: [CONTRIBUTING.md](../CONTRIBUTING.md)
 Security note: [SECURITY.md](../SECURITY.md)  
 Automated check: [scripts/verify-local.ps1](../scripts/verify-local.ps1)
 
-## Verification Scope
+## Verification scope
 
 This guide validates the main runtime path summarized in [README.md](../README.md). Scope limitations and simplifications are documented in [KNOWN-ISSUES.md](../KNOWN-ISSUES.md).
 
 ## Prerequisites
 
 Before running any command, make sure:
+
 - Docker Desktop is running
 - Java 21 is installed
 - Maven is available
-- a local [`.env`](../.env.example) file has been created based on [`.env.example`](../.env.example)
+- a local `.env` file has been created based on [`.env.example`](../.env.example)
 
-## Recommended Path
+## Recommended path
 
 The recommended reviewer path is:
 
@@ -31,15 +32,22 @@ The recommended reviewer path is:
 ```
 
 This script validates:
+
 - Docker Compose startup
-- health checks
+- health checks for `auth-api` and `data-api`
 - registration
 - login
 - protected processing
+- PostgreSQL persistence
 - rejection without JWT
 - rejection of direct access to [`data-api`](../data-api)
+- rejection with a wrong internal token
 
-## Manual Verification
+It is the shortest reproducible verification path for this repository.
+
+## Manual verification (optional)
+
+Manual verification is optional and provided only as an additional reviewer aid. The recommended way to verify the project is to use [scripts/verify-local.ps1](../scripts/verify-local.ps1).
 
 ### 1. Clean start
 
@@ -52,104 +60,93 @@ docker compose ps
 ```
 
 Expected:
+
 - all three containers are running
 - PostgreSQL is healthy
 
 ### 2. Health checks
 
-```powershell
-Invoke-RestMethod -Method GET -Uri "http://localhost:8080/health"
-Invoke-RestMethod -Method GET -Uri "http://localhost:8081/health"
-```
+Use a browser or any HTTP client of your choice to check:
+
+- `http://localhost:8080/health`
+- `http://localhost:8081/health`
 
 Expected responses:
+
 - `{"status":"ok","service":"auth-api"}`
 - `{"status":"ok","service":"data-api"}`
 
-### 3. Register
+### 3. Register and login
 
-```powershell
-$registerBody = @{ email = "reviewer@example.com"; password = "Pass12345!" } | ConvertTo-Json
-Invoke-WebRequest -Method POST -Uri "http://localhost:8080/api/auth/register" -ContentType "application/json" -Body $registerBody
-```
+If you want to repeat the authentication flow manually, use any HTTP client such as Postman, `curl`, or a REST client in your IDE.
 
-Expected:
-- HTTP 201 Created
+Manual flow:
 
-### 4. Login
-
-```powershell
-$loginBody = @{ email = "reviewer@example.com"; password = "Pass12345!" } | ConvertTo-Json
-$loginResponse = Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/auth/login" -ContentType "application/json" -Body $loginBody
-$token = $loginResponse.token
-$token
-```
+1. Send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
+2. Send `POST http://localhost:8080/api/auth/login` with the same JSON body.
+3. Extract the returned JWT token from the login response.
 
 Expected:
-- a JWT token is returned
 
-### 5. Protected processing
+- registration returns HTTP 201 Created
+- login returns a JSON body with a valid JWT token
 
-```powershell
-$processBody = @{ text = "hello" } | ConvertTo-Json
-Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/process" -Headers @{ Authorization = "Bearer $token" } -ContentType "application/json" -Body $processBody
-```
+For the shortest and most reproducible path, prefer the automated [scripts/verify-local.ps1](../scripts/verify-local.ps1) script.
+
+### 4. Protected processing
+
+Send a request with a valid JWT token:
+
+- `POST http://localhost:8080/api/process`
+- JSON body: `{"text":"hello"}`
 
 Expected response:
+
 - `{"result":"olleh"}`
 
-### 6. Database verification
+In this implementation, "processing" means reversing the input text (for example, `hello -> olleh`).
+
+A successful request should also create a new row in the `processinglog` table.
+
+### 5. Database verification
+
+After a successful protected processing request, check persisted rows in PostgreSQL:
 
 ```powershell
 docker exec winwin-backend-test-task-postgres-1 psql -U appuser -d appdb -c "SELECT id, user_email, input_text, output_text, created_at FROM processinglog ORDER BY id DESC LIMIT 5;"
 ```
 
 Expected:
-- at least one row appears after a successful processing request
+
+- at least one row appears after a successful `POST /api/process` request
 - the inserted row contains `user_email`, input text, output text, and timestamp
 
-### 7. Negative scenario: no JWT
+If the query returns `(0 rows)`, no successful processing request has been persisted yet. In that case, first complete the registration, login, and protected processing steps, or run [scripts/verify-local.ps1](../scripts/verify-local.ps1).
 
-```powershell
-$body = @{ text = "hello" } | ConvertTo-Json
-try {
-    Invoke-RestMethod -Method POST -Uri "http://localhost:8080/api/process" -ContentType "application/json" -Body $body
-} catch {
-    $_.Exception.Message
-}
-```
+### 6. Negative scenario: no JWT
+
+Send a request to `POST http://localhost:8080/api/process` without an `Authorization` header.
 
 Expected:
+
 - request is rejected
 - current expected status is `403`
 
-### 8. Negative scenario: direct access to data-api without internal token
+### 7. Negative scenario: direct access to data-api without internal token
 
-```powershell
-$body = @{ text = "hello" } | ConvertTo-Json
-try {
-    Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/transform" -ContentType "application/json" -Body $body
-} catch {
-    $_.Exception.Message
-}
-```
+Send a request to `POST http://localhost:8081/api/transform` without `X-Internal-Token`.
 
 Expected:
+
 - request is rejected
 - current expected status is `403`
 
-### 9. Negative scenario: wrong internal token
+### 8. Negative scenario: wrong internal token
 
-```powershell
-$body = @{ text = "hello" } | ConvertTo-Json
-try {
-    Invoke-RestMethod -Method POST -Uri "http://localhost:8081/api/transform" -Headers @{ "X-Internal-Token" = "wrong-token" } -ContentType "application/json" -Body $body
-} catch {
-    $_.Exception.Message
-}
-```
+Send a request to `POST http://localhost:8081/api/transform` with an incorrect `X-Internal-Token` header.
 
 Expected:
+
 - request is rejected
 - current expected status is `403`
 
@@ -159,5 +156,3 @@ Expected:
 - The current database table name is `processinglog`, not `processing_log`.
 - The current processing log stores `user_email`, not `user_id`.
 - For the shortest reproducible review path, prefer [scripts/verify-local.ps1](../scripts/verify-local.ps1) over manual request-by-request verification.
-
-
