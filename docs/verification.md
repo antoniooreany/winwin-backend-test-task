@@ -110,7 +110,17 @@ A successful request should also create a new row in the `processinglog` table.
 
 ### 5. Database verification
 
-After a successful protected processing request, check persisted rows in PostgreSQL:
+There are two ways to verify persistence.
+
+#### Option A: verification through the provided script
+
+The recommended script [scripts/verify-local.ps1](../scripts/verify-local.ps1) already performs a protected processing request and verifies that the expected row is persisted in PostgreSQL during its execution.
+
+Use this option if you want the shortest reproducible reviewer path.
+
+#### Option B: manual SQL inspection in a running stack
+
+If you want to inspect the database manually, keep the Docker Compose stack running, complete a successful protected processing request, and then query PostgreSQL:
 
 ```powershell
 docker exec winwin-backend-test-task-postgres-1 psql -U appuser -d appdb -c "SELECT id, user_email, input_text, output_text, created_at FROM processinglog ORDER BY id DESC LIMIT 5;"
@@ -121,7 +131,12 @@ Expected:
 - at least one row appears after a successful `POST /api/process` request
 - the inserted row contains `user_email`, input text, output text, and timestamp
 
-If the query returns `(0 rows)`, no successful processing request has been persisted yet. In that case, first complete the registration, login, and protected processing steps, or run [scripts/verify-local.ps1](../scripts/verify-local.ps1).
+If the query returns `(0 rows)`, no successful protected processing request has been persisted in the currently running stack yet. Make sure you have:
+
+- registered and logged in to obtain a valid JWT, and
+- successfully called `POST /api/process`
+
+before querying the `processinglog` table.
 
 ### 6. Negative scenario: no JWT
 
