@@ -1,5 +1,9 @@
 # WinWin Backend Test Task
 
+> For reviewers
+>
+> This repository contains a small two-service Spring Boot solution for the WinWin.travel backend test task. To review it quickly, you can follow the "Quick start" section and the "Reviewer checklist" at the end of this document.
+
 Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
@@ -187,3 +191,4 @@ You can use this short checklist to verify the project locally.
    ```bash
    docker compose down
    ```
+
