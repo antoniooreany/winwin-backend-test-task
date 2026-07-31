@@ -179,7 +179,7 @@ Expected:
 - For the shortest reproducible review path, prefer [scripts/verify-local.ps1](../scripts/verify-local.ps1) over manual request-by-request verification.
 ## Release alignment
 
-This verification flow aligns with release [`v0.3.1`](https://github.com/antoniooreany/winwin-backend-test-task/releases/tag/v0.3.1).
+This verification flow aligns with release [`v0.3.2`](https://github.com/antoniooreany/winwin-backend-test-task/releases/tag/v0.3.2).
 
-Reviewer-facing documentation for this release was updated to keep the local setup, verification script usage, and documentation map consistent with the current project structure.
+Reviewer-facing documentation for this release keeps the local setup, verification script usage, README quick start, and documentation map aligned with the current stable reviewer entry point.
 

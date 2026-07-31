@@ -8,11 +8,11 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: **v0.3.0**  
-Previous stable releases: `v0.2.0`, `v0.1.0`  
+Current stable release: **v0.3.2**  
+Previous stable releases: `v0.3.1`, `v0.3.0`, `v0.2.0`, `v0.1.0`  
 Earlier pre-release: `v0.1.0-rc1`
 
-Release `v0.3.0` finalizes the reviewer-facing documentation, aligns the local verification flow with the current project structure, and documents the current Docker-based verification path, Flyway-backed startup, and processing log behavior.
+Release `v0.3.2` keeps the reviewer-facing documentation aligned with the current project structure and local verification flow, including the README quick start, verification guide, and release-related documentation updates.
 
 For published release notes, see the [Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases) page. For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
 
@@ -124,3 +124,4 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
