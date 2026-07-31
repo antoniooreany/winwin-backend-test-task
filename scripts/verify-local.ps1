@@ -59,7 +59,7 @@ $dataReady = $false
 
 for ($i = 0; $i -lt 60; $i++) {
     try {
-        $auth = (& curl.exe -fsS "http://localhost:8080/health") | ConvertFrom-Json
+        $auth = (& curl.exe -fsS "http://127.0.0.1:8080/health") | ConvertFrom-Json
         if ($auth.status -eq "ok" -and $auth.service -eq "auth-api") { $authReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
@@ -67,7 +67,7 @@ for ($i = 0; $i -lt 60; $i++) {
 
 for ($i = 0; $i -lt 60; $i++) {
     try {
-        $data = (& curl.exe -fsS "http://localhost:8081/health") | ConvertFrom-Json
+        $data = (& curl.exe -fsS "http://127.0.0.1:8081/health") | ConvertFrom-Json
         if ($data.status -eq "ok" -and $data.service -eq "data-api") { $dataReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
@@ -143,3 +143,4 @@ Log "Smoke Test Summary"
 Log "Passed: $passed"
 Log "Failed: $failed"
 if ($failed -eq 0) { Log "RESULT: PASS" } else { Log "RESULT: FAIL"; exit 1 }
+

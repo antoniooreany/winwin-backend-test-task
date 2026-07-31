@@ -74,8 +74,8 @@ Expected:
 
 Use a browser or any HTTP client of your choice to check:
 
-- `http://localhost:8080/health`
-- `http://localhost:8081/health`
+- `http://127.0.0.1:8080/health`
+- `http://127.0.0.1:8081/health`
 
 Expected responses:
 
@@ -182,4 +182,5 @@ Expected:
 This verification flow aligns with release [`v0.3.2`](https://github.com/antoniooreany/winwin-backend-test-task/releases/tag/v0.3.2).
 
 Reviewer-facing documentation for this release keeps the local setup, verification script usage, README quick start, and documentation map aligned with the current stable reviewer entry point.
+
 
