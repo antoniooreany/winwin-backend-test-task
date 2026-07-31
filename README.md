@@ -1,5 +1,9 @@
 # WinWin Backend Test Task
 
+> For reviewers
+>
+> This repository contains a small two-service Spring Boot solution for the WinWin.travel backend test task. To review it quickly, you can follow the "Quick start" section and the "Reviewer checklist" at the end of this document.
+
 Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
@@ -135,3 +139,56 @@ Health response examples:
 - [Security policy](./SECURITY.md)
 - [Changelog](./CHANGELOG.md)
 - [Local verification script](./scripts/verify-local.ps1)
+
+
+## Reviewer checklist
+
+You can use this short checklist to verify the project locally.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/antoniooreany/winwin-backend-test-task.git
+   cd winwin-backend-test-task
+   ```
+
+2. Prepare environment:
+   ```powershell
+   Copy-Item .env.example .env
+   # Update .env with local values if needed
+   ```
+
+3. Build both services (tests skipped for faster review):
+   ```bash
+   mvn -f auth-api/pom.xml clean package -DskipTests
+   mvn -f data-api/pom.xml clean package -DskipTests
+   ```
+
+4. Start the stack:
+   ```bash
+   docker compose up -d --build
+   docker compose ps
+   ```
+   Expected: `auth-api`, `data-api`, and `postgres` containers are `running` / `healthy`.
+
+5. Run the verification script:
+   ```powershell
+   .\scripts\verify-local.ps1
+   ```
+   Expected: script completes without errors and prints a summary of the main registration → login → processing flow plus key negative scenarios.
+
+6. Check health endpoints (optional):
+   ```bash
+   curl http://localhost:8080/actuator/health
+   curl http://localhost:8081/actuator/health
+   ```
+   Expected JSON responses similar to:
+   ```json
+   {"status":"ok","service":"auth-api"}
+   {"status":"ok","service":"data-api"}
+   ```
+
+7. Stop the stack:
+   ```bash
+   docker compose down
+   ```
+
