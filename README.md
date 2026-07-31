@@ -2,7 +2,7 @@
 
 > For reviewers
 >
-> This repository contains a small two-service Spring Boot solution for the WinWin.travel backend test task. To review it quickly, you can follow the "Quick start" section and the "Reviewer checklist" at the end of this document.
+> This repository contains a small two-service Spring Boot solution for the WinWin.travel backend test task. The fastest way to review it is to follow the **Quick start** section and then run `.\scripts\verify-local.ps1`.
 
 Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
@@ -24,9 +24,7 @@ The project includes:
 - [`data-api`](./data-api) — internal text transformation service protected by `X-Internal-Token`
 - [PostgreSQL](https://www.postgresql.org/) — persistence layer for users and processing logs
 
-For more detail, see [Architecture overview](./docs/architecture.md), [Technical decisions](./docs/decisions.md), [Verification guide](./docs/verification.md), and [Known issues and trade-offs](./KNOWN-ISSUES.md).
-
-## Main flow
+Main flow:
 
 1. A user registers in [`auth-api`](./auth-api).
 2. A user logs in and receives a JWT token.
@@ -36,85 +34,56 @@ For more detail, see [Architecture overview](./docs/architecture.md), [Technical
 
 Current transform example: `hello -> olleh`.
 
-## Getting started
+For more detail, see [Architecture overview](./docs/architecture.md), [Technical decisions](./docs/decisions.md), [Verification guide](./docs/verification.md), and [Known issues and trade-offs](./KNOWN-ISSUES.md).
 
-### 1. Clone the repository
+## Quick start
 
-```powershell
-git clone https://github.com/antoniooreany/winwin-backend-test-task.git
-cd winwin-backend-test-task
-git status
-```
-
-### 2. Prerequisites
+### Prerequisites
 
 - Java 21
 - Maven
 - PowerShell
 - Docker Desktop running
 
-Before startup, create a local `.env` file based on `.env.example`:
+### Setup and run
+
+Clone the repository first:
+
+```powershell
+git clone https://github.com/antoniooreany/winwin-backend-test-task.git
+cd winwin-backend-test-task
+```
+
+Then create a local `.env` file based on `.env.example`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Fill in the placeholder values with your local settings.
-
-## Quick start
-
-### 1. Build `auth-api`
-
-```powershell
-mvn -f auth-api/pom.xml clean package -DskipTests
-```
-
-### 2. Build `data-api`
-
-```powershell
-mvn -f data-api/pom.xml clean package -DskipTests
-```
-
-### 3. Start the stack
-
-```powershell
-docker compose up -d --build
-```
-
-### 4. Check running containers
-
-```powershell
-docker compose ps
-```
-
-All three services (`auth-api`, `data-api`, `postgres`) should be running, and PostgreSQL should be healthy.
-
-### 5. Run the recommended local verification flow
-
-```powershell
-.\scripts\verify-local.ps1
-```
-
-This script performs the shortest reproducible verification flow for the current stable release and covers the main runtime path together with key negative scenarios.
-
-### 6. Stop the stack
-
-```powershell
-docker compose down
-```
-
-### Optional full sequence
+Fill in the placeholder values in `.env` with your local settings, then run:
 
 ```powershell
 mvn -f auth-api/pom.xml clean package -DskipTests
 mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 docker compose ps
+```
+
+All three services (`auth-api`, `data-api`, `postgres`) should be running, and PostgreSQL should be healthy before the verification script is executed.
+
+Start a local verification:
+
+```powershell
 .\scripts\verify-local.ps1
+```
+
+Stop the stack (if necessary) with:
+
+```powershell
 docker compose down
 ```
 
-Detailed validation steps are available in the [Verification guide](./docs/verification.md).
+Detailed validation steps are available in the [Verification guide](./docs/verification.md). For implementation context, see [Architecture overview](./docs/architecture.md), [Technical decisions](./docs/decisions.md), and [Known issues and trade-offs](./KNOWN-ISSUES.md).
 
 ## Endpoints
 
@@ -129,6 +98,8 @@ Health response examples:
 - `{"status":"ok","service":"auth-api"}`
 - `{"status":"ok","service":"data-api"}`
 
+For a step-by-step verification path, see [Verification guide](./docs/verification.md).
+
 ## Documentation map
 
 - [Architecture overview](./docs/architecture.md)
@@ -140,57 +111,16 @@ Health response examples:
 - [Changelog](./CHANGELOG.md)
 - [Local verification script](./scripts/verify-local.ps1)
 
-
 ## Reviewer checklist
 
-You can use this short checklist to verify the project locally.
+- Clone the repository and prepare `.env` from `.env.example`.
+- Build both services with Maven.
+- Start the stack with `docker compose up -d --build`.
+- Confirm that `auth-api`, `data-api`, and `postgres` are running.
+- Run `.\scripts\verify-local.ps1`.
+- Optionally check the health endpoints and Swagger UI.
+- Stop the stack cleanly with `docker compose down`.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/antoniooreany/winwin-backend-test-task.git
-   cd winwin-backend-test-task
-   ```
-
-2. Prepare environment:
-   ```powershell
-   Copy-Item .env.example .env
-   # Update .env with local values if needed
-   ```
-
-3. Build both services (tests skipped for faster review):
-   ```bash
-   mvn -f auth-api/pom.xml clean package -DskipTests
-   mvn -f data-api/pom.xml clean package -DskipTests
-   ```
-
-4. Start the stack:
-   ```bash
-   docker compose up -d --build
-   docker compose ps
-   ```
-   Expected: `auth-api`, `data-api`, and `postgres` containers are `running` / `healthy`.
-
-5. Run the verification script:
-   ```powershell
-   .\scripts\verify-local.ps1
-   ```
-   Expected: script completes without errors and prints a summary of the main registration → login → processing flow plus key negative scenarios.
-
-6. Check health endpoints (optional):
-   ```bash
-   curl http://localhost:8080/actuator/health
-   curl http://localhost:8081/actuator/health
-   ```
-   Expected JSON responses similar to:
-   ```json
-   {"status":"ok","service":"auth-api"}
-   {"status":"ok","service":"data-api"}
-   ```
-
-7. Stop the stack:
-   ```bash
-   docker compose down
-   ```
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
