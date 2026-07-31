@@ -5,6 +5,8 @@ $failed = 0
 $email = "reviewer+$([guid]::NewGuid().ToString('N').Substring(0,8))@example.com"
 $password = "Pass12345!"
 $report = ".\smoke-report.txt"
+$authBaseUrl = "http://127.0.0.1:8080"
+$dataBaseUrl = "http://127.0.0.1:8081"
 
 Remove-Item $report -ErrorAction SilentlyContinue
 
@@ -59,7 +61,7 @@ $dataReady = $false
 
 for ($i = 0; $i -lt 60; $i++) {
     try {
-        $auth = (& curl.exe -fsS "http://127.0.0.1:8080/health") | ConvertFrom-Json
+        $auth = (& curl.exe -fsS "$authBaseUrl/health") | ConvertFrom-Json
         if ($auth.status -eq "ok" -and $auth.service -eq "auth-api") { $authReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
@@ -67,7 +69,7 @@ for ($i = 0; $i -lt 60; $i++) {
 
 for ($i = 0; $i -lt 60; $i++) {
     try {
-        $data = (& curl.exe -fsS "http://127.0.0.1:8081/health") | ConvertFrom-Json
+        $data = (& curl.exe -fsS "$dataBaseUrl/health") | ConvertFrom-Json
         if ($data.status -eq "ok" -and $data.service -eq "data-api") { $dataReady = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
@@ -84,13 +86,13 @@ if (-not ($authReady -and $dataReady)) {
 
 Section "Register user"
 $registerBody = "{""email"":""$email"",""password"":""$password""}"
-$registerStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8080/api/auth/register" -Body $registerBody -Headers @("Content-Type: application/json")
+$registerStatus = Get-StatusCurl -Method "POST" -Url "$authBaseUrl/api/auth/register" -Body $registerBody -Headers @("Content-Type: application/json")
 if ($registerStatus -eq 201) { Pass "Registration returned HTTP 201" } else { Fail "Registration returned HTTP $registerStatus" }
 
 Section "Login user"
 $loginBody = "{""email"":""$email"",""password"":""$password""}"
 try {
-    $login = (Get-JsonCurl -Method "POST" -Url "http://localhost:8080/api/auth/login" -Body $loginBody -Headers @("Content-Type: application/json")) | ConvertFrom-Json
+    $login = (Get-JsonCurl -Method "POST" -Url "$authBaseUrl/api/auth/login" -Body $loginBody -Headers @("Content-Type: application/json")) | ConvertFrom-Json
     $token = $login.token
     if ($token) { Pass "Login returned JWT token" } else { Fail "Login response did not contain token" }
 } catch {
@@ -100,7 +102,7 @@ try {
 Section "Call protected process endpoint"
 $processBody = "{""text"":""hello""}"
 try {
-    $process = (Get-JsonCurl -Method "POST" -Url "http://localhost:8080/api/process" -Body $processBody -Headers @("Authorization: Bearer $token", "Content-Type: application/json")) | ConvertFrom-Json
+    $process = (Get-JsonCurl -Method "POST" -Url "$authBaseUrl/api/process" -Body $processBody -Headers @("Authorization: Bearer $token", "Content-Type: application/json")) | ConvertFrom-Json
     if ($process.result -eq "olleh") { Pass "Protected endpoint returned expected result" } else { Fail "Protected endpoint returned unexpected result: $($process.result)" }
 } catch {
     Fail "Protected endpoint request failed"
@@ -122,15 +124,15 @@ if (-not $pgContainer) {
 }
 
 Section "Negative check without JWT"
-$noJwtStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8080/api/process" -Body $processBody -Headers @("Content-Type: application/json")
+$noJwtStatus = Get-StatusCurl -Method "POST" -Url "$authBaseUrl/api/process" -Body $processBody -Headers @("Content-Type: application/json")
 if ($noJwtStatus -eq 401 -or $noJwtStatus -eq 403) { Pass "Protected endpoint correctly rejected request without JWT ($noJwtStatus)" } else { Fail "Protected endpoint returned unexpected status without JWT: $noJwtStatus" }
 
 Section "Negative check: direct access to data-api"
-$directStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8081/api/transform" -Body $processBody -Headers @("Content-Type: application/json")
+$directStatus = Get-StatusCurl -Method "POST" -Url "$dataBaseUrl/api/transform" -Body $processBody -Headers @("Content-Type: application/json")
 if ($directStatus -eq 403) { Pass "data-api correctly rejected direct access without internal token (403)" } else { Fail "data-api returned unexpected status without internal token: $directStatus" }
 
 Section "Negative check: wrong internal token"
-$wrongTokenStatus = Get-StatusCurl -Method "POST" -Url "http://localhost:8081/api/transform" -Body $processBody -Headers @("Content-Type: application/json", "X-Internal-Token: wrong-token")
+$wrongTokenStatus = Get-StatusCurl -Method "POST" -Url "$dataBaseUrl/api/transform" -Body $processBody -Headers @("Content-Type: application/json", "X-Internal-Token: wrong-token")
 if ($wrongTokenStatus -eq 403) { Pass "data-api correctly rejected wrong internal token (403)" } else { Fail "data-api returned unexpected status with wrong internal token: $wrongTokenStatus" }
 
 Section "Docker Compose shutdown"
@@ -143,4 +145,5 @@ Log "Smoke Test Summary"
 Log "Passed: $passed"
 Log "Failed: $failed"
 if ($failed -eq 0) { Log "RESULT: PASS" } else { Log "RESULT: FAIL"; exit 1 }
+
 
