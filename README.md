@@ -191,4 +191,6 @@ You can use this short checklist to verify the project locally.
    ```bash
    docker compose down
    ```
+## License
 
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
