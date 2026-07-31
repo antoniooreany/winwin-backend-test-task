@@ -129,3 +129,21 @@ The PostgreSQL schema is Flyway-managed. If schema behavior changes, update [REA
 ## Verification note
 
 The current quick verification path is [scripts/smoke.ps1](./scripts/smoke.ps1). Manual API checks from [README.md](./README.md) should remain runnable and consistent with [docs/verification.md](./docs/verification.md).
+
+## Versioning
+
+The current repository version is stored in `.version`.
+
+To update the version in one place and synchronize both Maven modules, run:
+
+```powershell
+.\scripts\set-version.ps1 -Version 0.3.5
+```
+
+This updates:
+- `.version`
+- `auth-api/pom.xml`
+- `data-api/pom.xml`
+
+Release-related documentation such as `README.md` and `CHANGELOG.md` should still be reviewed and finalized before publishing a release.
+
