@@ -10,7 +10,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,14 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build auth-api
+      - name: Test auth-api
+        run: mvn -f auth-api/pom.xml test
+
+      - name: Test data-api
+        run: mvn -f data-api/pom.xml test
+
+      - name: Package auth-api
         run: mvn -f auth-api/pom.xml clean package -DskipTests
 
-      - name: Build data-api
+      - name: Package data-api
         run: mvn -f data-api/pom.xml clean package -DskipTests
