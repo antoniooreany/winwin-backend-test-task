@@ -43,11 +43,21 @@ mvn -f data-api/pom.xml clean package -DskipTests | Tee-Object -FilePath $report
 if ($LASTEXITCODE -ne 0) { Fail "data-api build failed"; exit 1 } else { Pass "data-api built successfully" }
 
 Section "Ensure service JAR files exist"
-if ((Test-Path ".\auth-api\target\auth-api-0.0.1-SNAPSHOT.jar") -and (Test-Path ".\data-api\target\data-api-0.0.1-SNAPSHOT.jar")) {
-    Pass "Required JAR files are available"
-} else {
+$authJar = Get-ChildItem ".\auth-api\target\auth-api-*.jar" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -notlike "*.jar.original" } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+$dataJar = Get-ChildItem ".\data-api\target\data-api-*.jar" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -notlike "*.jar.original" } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+if (-not $authJar -or -not $dataJar) {
     Fail "Required JAR files are missing"
     exit 1
+} else {
+    Pass "Required JAR files are available"
 }
 
 Section "Docker Compose reset"
