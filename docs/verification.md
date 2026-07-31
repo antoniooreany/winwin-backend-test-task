@@ -177,3 +177,9 @@ Expected:
 - The current database table name is `processinglog`, not `processing_log`.
 - The current processing log stores `user_email`, not `user_id`.
 - For the shortest reproducible review path, prefer [scripts/verify-local.ps1](../scripts/verify-local.ps1) over manual request-by-request verification.
+## Release alignment
+
+This verification flow aligns with release [`v0.3.1`](https://github.com/antoniooreany/winwin-backend-test-task/releases/tag/v0.3.1).
+
+Reviewer-facing documentation for this release was updated to keep the local setup, verification script usage, and documentation map consistent with the current project structure.
+

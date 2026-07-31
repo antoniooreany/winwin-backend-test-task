@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-31
+
+### Documentation
+
+- Simplified README quick start for reviewers.
+- Synchronized reviewer checklist with `.\scripts\verify-local.ps1` verification flow.
+- Clarified the current reviewer-facing local verification path and documentation entry points.
+
 ### Changed
 
 - strengthened cross-links across repository documentation
@@ -99,3 +107,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
+
