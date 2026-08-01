@@ -1,10 +1,10 @@
 package com.winwintravel.authapi;
 
-import org.junit.jupiter.api.Test;
 import com.winwintravel.authapi.process.DataApiClient;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,7 +14,7 @@ import java.net.http.HttpResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ProcessingHistoryIntegrationTest {
+class ProcessingHistoryIntegrationTest extends PostgresIntegrationTestBase {
 
     @MockitoBean
     DataApiClient dataApiClient;
@@ -120,7 +120,3 @@ class ProcessingHistoryIntegrationTest {
         throw new IllegalStateException("JWT token not found in login response: " + json);
     }
 }
-
-
-
-
