@@ -8,13 +8,11 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: **v0.3.3**  
-Previous stable releases: `v0.3.1`, `v0.3.0`, `v0.2.0`, `v0.1.0`  
-Earlier pre-release: `v0.1.0-rc1`
+Current stable release: v0.3.4
 
-Release `v0.3.3` keeps the reviewer-facing documentation aligned with the current project structure and local verification flow, including the README quick start, verification guide, and release-related documentation updates.
+Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).
 
-For published release notes, see the [Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases) page. For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
+For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
 
 ## Overview
 
@@ -41,9 +39,9 @@ For more detail, see [Architecture overview](./docs/architecture.md), [Technical
 ### Prerequisites
 
 - Java 21
-- Maven
 - PowerShell
 - Docker Desktop running
+- Maven (optional, only for manual local builds outside Docker)
 
 ### Setup and run
 
@@ -54,13 +52,13 @@ git clone https://github.com/antoniooreany/winwin-backend-test-task.git
 cd winwin-backend-test-task
 ```
 
-Then create a local `.env` file based on `.env.example`:
+Then create a local `.env` file based on `.env.example` (optional, for overriding defaults):
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Fill in the placeholder values in `.env` with your local settings, then start the stack:
+If you want to customize local secrets or ports, fill in the values in `.env`. Otherwise, you can start the stack with defaults:
 
 ```powershell
 docker compose up -d --build
@@ -112,8 +110,8 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 
 ## Reviewer checklist
 
-- Clone the repository and prepare `.env` from `.env.example`.
-- Build both services with Maven.
+- Clone the repository.
+- Optionally create `.env` from `.env.example` to override local defaults.
 - Start the stack with `docker compose up -d --build`.
 - Confirm that `auth-api`, `data-api`, and `postgres` are running.
 - Run `.\scripts\verify-local.ps1`.
@@ -123,5 +121,3 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
-
