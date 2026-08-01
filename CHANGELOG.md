@@ -1,4 +1,4 @@
-## v0.3.6 - 2026-08-02
+## v0.3.7 - 2026-08-02
 
 ### Added
 - Added `scripts/dev-tools.ps1` with `Invoke-FullVerificationShort` and `Show-FullVerificationFailures` for shorter local verification output and failure inspection.
@@ -15,7 +15,7 @@
 - Full verification still exposes a separate `auth-api did not become healthy` health-check timing issue, which is now easier to inspect via the new dev-tools helpers.
 
 
-## [0.3.5] - 2026-08-01
+## [0.3.6] - 2026-08-01
 
 ### Added
 - End-to-end auth-api integration test backed by PostgreSQL Testcontainers.
@@ -138,6 +138,7 @@
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
+
 
 
 
