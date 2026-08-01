@@ -3,6 +3,7 @@ package com.winwintravel.authapi.process;
 import com.winwintravel.authapi.repository.UserRepository;
 import com.winwintravel.authapi.user.User;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
 
 @Service
 public class ProcessService {
@@ -30,14 +31,18 @@ public class ProcessService {
         String output = dataApiClient.transform(input);
 
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("User not found for email: " + userEmail));
+                .orElseThrow(() -> new IllegalStateException("User not found: " + userEmail));
 
         ProcessingLog log = new ProcessingLog();
         log.setUser(user);
+        log.setUserEmail(userEmail);
         log.setInputText(input);
         log.setOutputText(output);
+        log.setCreatedAt(Instant.now());
+
         processingLogRepository.save(log);
 
         return new ProcessResponse(output);
     }
 }
+

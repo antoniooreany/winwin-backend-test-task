@@ -1,12 +1,3 @@
-# Changelog
-
-All notable changes to this project are documented in this file.
-
-For the current project overview, see [README.md](./README.md). For runtime structure, see [docs/architecture.md](./docs/architecture.md). For implementation rationale, see [docs/decisions.md](./docs/decisions.md). For validation guidance, see [docs/verification.md](./docs/verification.md). For accepted trade-offs, see [KNOWN-ISSUES.md](./KNOWN-ISSUES.md). For local change workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows an informal [Semantic Versioning](https://semver.org/spec/v2.0.0.html) style for repository milestones.
-
-## [Unreleased]
 
 ## [0.3.5] - 2026-08-01
 
@@ -131,3 +122,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
+
+

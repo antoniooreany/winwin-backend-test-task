@@ -43,3 +43,10 @@ full-verification-report.txt
 .logs/
 **/target/
 smoke-report.txt
+
+# local analysis artifacts
+project-context/
+project-context-2/
+project-context-3/
+project-review/
+$PROFILE
