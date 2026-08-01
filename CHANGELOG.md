@@ -1,3 +1,27 @@
+## [0.3.6] - 2026-08-01
+
+### Added
+- Processing history improvements for the protected flow.
+- Extended auth log visibility for reviewer-facing verification.
+
+### Changed
+- Updated README release status to reference 0.3.6 as the current stable release.
+- Aligned repository-level documentation with the 0.3.6 release context.
+
+### Known issues
+- ProcessingHistoryIntegrationTest may fail locally with Connection refused during module-level mvn clean verify runs.
+- scripts/check-auth-flow.ps1 may fail at login with An existing connection was forcibly closed by the remote host even when the main smoke flow passes.
+- scripts/check-internal-token.ps1 may fail on the valid-header path with An existing connection was forcibly closed by the remote host even when invalid-header rejection works as expected.
+
+### 0.3.6 verification (PowerShell)
+
+`powershell
+.\scripts\set-version.ps1 -Version 0.3.6
+docker compose up -d --build
+docker compose ps
+.\scripts\verify-local.ps1
+docker compose down
+`
 
 ## [0.3.5] - 2026-08-01
 
@@ -122,5 +146,7 @@
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
+
+
 
 

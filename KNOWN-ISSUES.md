@@ -1,3 +1,9 @@
+## 0.3.6
+
+- uth-api module verification may fail locally in ProcessingHistoryIntegrationTest with java.net.ConnectException: Connection refused during mvn -f .\auth-api\pom.xml clean verify.
+- scripts/check-auth-flow.ps1 may fail on the login step with Unable to read data from the transport connection: An existing connection was forcibly closed by the remote host even after docker compose up -d --build.
+- scripts/check-internal-token.ps1 may fail on the valid internal-token path with Unable to read data from the transport connection: An existing connection was forcibly closed by the remote host, while the missing-header and invalid-header checks still pass.
+- The main reviewer-facing smoke flow remains .\scripts\verify-local.ps1, which currently passes successfully for the local Docker Compose stack.
 # Known Issues and Trade-offs
 
 This document reflects the accepted trade-offs of the current stable release: **v0.3.0**.
@@ -68,3 +74,4 @@ Potential next steps:
 - add stronger validation and error handling coverage
 - add centralized structured logging
 - tighten production-facing security hardening
+
