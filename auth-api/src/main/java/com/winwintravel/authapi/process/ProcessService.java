@@ -1,5 +1,7 @@
 package com.winwintravel.authapi.process;
 
+import com.winwintravel.authapi.repository.UserRepository;
+import com.winwintravel.authapi.user.User;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -7,13 +9,16 @@ public class ProcessService {
 
     private final DataApiClient dataApiClient;
     private final ProcessingLogRepository processingLogRepository;
+    private final UserRepository userRepository;
 
     public ProcessService(
             DataApiClient dataApiClient,
-            ProcessingLogRepository processingLogRepository
+            ProcessingLogRepository processingLogRepository,
+            UserRepository userRepository
     ) {
         this.dataApiClient = dataApiClient;
         this.processingLogRepository = processingLogRepository;
+        this.userRepository = userRepository;
     }
 
     public ProcessResponse processText(ProcessRequest request) {
@@ -24,8 +29,11 @@ public class ProcessService {
         String input = request != null && request.text() != null ? request.text() : "";
         String output = dataApiClient.transform(input);
 
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for email: " + userEmail));
+
         ProcessingLog log = new ProcessingLog();
-        log.setUserEmail(userEmail);
+        log.setUser(user);
         log.setInputText(input);
         log.setOutputText(output);
         processingLogRepository.save(log);
