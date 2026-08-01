@@ -11,6 +11,7 @@ on:
 
 jobs:
   build-and-test:
+    name: Build and test services
     runs-on: ubuntu-latest
 
     steps:
