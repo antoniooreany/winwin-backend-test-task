@@ -24,7 +24,10 @@ import java.net.http.HttpResponse;
 
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = "springdoc.api-docs.enabled=false"
+)
 @Testcontainers
 class AuthApiIntegrationTest {
 
