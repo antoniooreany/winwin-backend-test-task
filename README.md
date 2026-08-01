@@ -22,6 +22,15 @@ This repository models a backend interview test task and has been iteratively im
 Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).  
 For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
 
+## What this test task demonstrates
+
+- Design and implementation of a small, production-like backend system with two Spring Boot services (`auth-api` and `data-api`) plus PostgreSQL persistence.
+- JWT-based authentication and a protected processing flow, including internal service authorization (`X-Internal-Token`) between services.
+- Infrastructure-as-code setup with Docker Compose and multi-stage Dockerfiles, enabling reproducible local environments without manual Maven packaging.
+- Test strategy that combines unit tests with a PostgreSQL Testcontainers integration test and a Docker Compose smoke verification script.
+- Continuous integration pipeline that runs module tests and stack-level smoke checks on each release.
+- GitFlow-style branching model with feature, develop, release, and main branches, tagged releases, and curated changelog/documentation for reviewers.
+
 ## Overview
 
 The project includes:
