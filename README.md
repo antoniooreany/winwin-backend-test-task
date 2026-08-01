@@ -60,16 +60,15 @@ Then create a local `.env` file based on `.env.example`:
 Copy-Item .env.example .env
 ```
 
-Fill in the placeholder values in `.env` with your local settings, then run:
+Fill in the placeholder values in `.env` with your local settings, then start the stack:
 
 ```powershell
-mvn -f auth-api/pom.xml clean package -DskipTests
-mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 docker compose ps
 ```
 
 All three services (`auth-api`, `data-api`, `postgres`) should be running, and PostgreSQL should be healthy before the verification script is executed.
+Docker images are built with multi-stage Dockerfiles, so a separate local `mvn package` step is not required before `docker compose up -d --build`.
 
 Start a local verification:
 
@@ -124,4 +123,5 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
 
