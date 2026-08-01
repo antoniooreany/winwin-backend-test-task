@@ -52,13 +52,15 @@ git clone https://github.com/antoniooreany/winwin-backend-test-task.git
 cd winwin-backend-test-task
 ```
 
-Then create a local `.env` file based on `.env.example` (optional, for overriding defaults):
+Then create a local `.env` file based on `.env.example`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-If you want to customize local secrets or ports, fill in the values in `.env`. Otherwise, you can start the stack with defaults:
+The `.env` file contains local PostgreSQL settings, datasource settings, the internal service token, and the JWT signing secret used by Docker Compose.
+
+You can keep the example values for a standard local run, or replace them with your own local values before startup.
 
 ```powershell
 docker compose up -d --build
@@ -111,7 +113,8 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## Reviewer checklist
 
 - Clone the repository.
-- Optionally create `.env` from `.env.example` to override local defaults.
+- Create `.env` from `.env.example`.
+- Optionally replace the example local secrets and connection settings.
 - Start the stack with `docker compose up -d --build`.
 - Confirm that `auth-api`, `data-api`, and `postgres` are running.
 - Run `.\scripts\verify-local.ps1`.
