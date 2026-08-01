@@ -9,7 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 
 ## [0.3.5] - 2026-08-01
-- Backend test task improvements: CI tests, Testcontainers, multi-stage Docker, smoke tests
+
+### Added
+- End-to-end auth-api integration test backed by PostgreSQL Testcontainers.
+- CI smoke job running the full Docker Compose stack and protected flow.
+
+### Changed
+- CI now runs module tests for auth-api and data-api before packaging.
+- auth-api and data-api Dockerfiles now use multi-stage builds.
+- Repository versioning is centralized via `.version` and `scripts/set-version.ps1`.
 
 ## [0.3.4] - 2026-08-01
 

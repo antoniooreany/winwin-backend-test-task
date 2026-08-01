@@ -8,11 +8,28 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: v0.3.4
+Current stable release: **v0.3.5**  
+Previous stable releases: `v0.3.4`, `v0.3.3`, `v0.3.2`, `v0.3.1`, `v0.3.0`, `v0.2.0`, `v0.1.0`  
+Earlier pre-release: `v0.1.0-rc1`
 
-Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).
+This repository models a backend interview test task and has been iteratively improved with:
 
+- CI pipeline running module tests and Docker Compose smoke checks.
+- Testcontainers-backed integration test for the [`auth-api`](./auth-api) flow.
+- Multi-stage Docker builds for both [`auth-api`](./auth-api) and [`data-api`](./data-api).
+- Centralized versioning via [`.version`](./.version) and [`scripts/set-version.ps1`](./scripts/set-version.ps1).
+
+Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).  
 For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
+
+## What this test task demonstrates
+
+- Design and implementation of a small, production-like backend system with two Spring Boot services, [`auth-api`](./auth-api) and [`data-api`](./data-api), plus [PostgreSQL](https://www.postgresql.org/) persistence.
+- JWT-based authentication and a protected processing flow, including internal service authorization via `X-Internal-Token` between [`auth-api`](./auth-api) and [`data-api`](./data-api).
+- Infrastructure-as-code setup with Docker Compose and multi-stage Dockerfiles, enabling reproducible local environments without manual Maven packaging.
+- Test strategy that combines unit tests with a [PostgreSQL](https://www.postgresql.org/)-backed Testcontainers integration test and a Docker Compose smoke verification script.
+- Continuous integration pipeline that runs module tests and stack-level smoke checks on each release.
+- GitFlow-style branching model with feature, develop, release, and main branches, tagged releases, and curated changelog/documentation for reviewers.
 
 ## Overview
 
