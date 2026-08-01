@@ -7,4 +7,5 @@ public record ProcessingHistoryItemResponse(
         String inputText,
         String outputText,
         Instant createdAt
-) {}
+) {
+}
