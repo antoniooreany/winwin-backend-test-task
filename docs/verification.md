@@ -59,8 +59,6 @@ If you still want to verify endpoints manually, you can use any HTTP client you 
 
 ```powershell
 docker compose down -v
-mvn -f auth-api/pom.xml clean package -DskipTests
-mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 docker compose ps
 ```
@@ -184,3 +182,7 @@ This verification flow aligns with release [`v0.3.2`](https://github.com/antonio
 Reviewer-facing documentation for this release keeps the local setup, verification script usage, README quick start, and documentation map aligned with the current stable reviewer entry point.
 
 
+
+## Docker build note
+
+The service images are built with multi-stage Dockerfiles. For the standard local verification path, running `docker compose up -d --build` is sufficient and does not require a separate manual Maven packaging step beforehand.

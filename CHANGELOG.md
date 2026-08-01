@@ -1,12 +1,5 @@
 # Changelog
 
-## [v0.3.4] - 2026-07-31
-
-### Fixed
-- local verification flow no longer depends on hardcoded snapshot JAR names
-- Docker image builds for `auth-api` and `data-api` now use version-agnostic JAR copy patterns
-- local smoke-test flow restored for release-versioned Maven artifacts on `main` and `develop`
-
 All notable changes to this project are documented in this file.
 
 For the current project overview, see [README.md](./README.md). For runtime structure, see [docs/architecture.md](./docs/architecture.md). For implementation rationale, see [docs/decisions.md](./docs/decisions.md). For validation guidance, see [docs/verification.md](./docs/verification.md). For accepted trade-offs, see [KNOWN-ISSUES.md](./KNOWN-ISSUES.md). For local change workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -14,6 +7,14 @@ For the current project overview, see [README.md](./README.md). For runtime stru
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows an informal [Semantic Versioning](https://semver.org/spec/v2.0.0.html) style for repository milestones.
 
 ## [Unreleased]
+
+## [0.3.5] - 2026-08-01
+- Backend test task improvements: CI tests, Testcontainers, multi-stage Docker, smoke tests
+
+## [0.3.4] - 2026-08-01
+
+### Changed
+- Release polishing.
 
 ## [0.3.3] - 2026-07-31
 
@@ -122,5 +123,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
-
-

@@ -8,13 +8,11 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: **v0.3.4**
-Previous stable releases: `v0.3.3`, `v0.3.2`, `v0.3.1`, `v0.3.0`, `v0.2.0`, `v0.1.0`
-Earlier pre-release: `v0.1.0-rc1`
+Current stable release: v0.3.4
 
-Release `v0.3.3` keeps the reviewer-facing documentation aligned with the current project structure and local verification flow, including the README quick start, verification guide, and release-related documentation updates.
+Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).
 
-For published release notes, see the [Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases) page. For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
+For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
 
 ## Overview
 
@@ -41,9 +39,9 @@ For more detail, see [Architecture overview](./docs/architecture.md), [Technical
 ### Prerequisites
 
 - Java 21
-- Maven
 - PowerShell
 - Docker Desktop running
+- Maven (optional, only for manual local builds outside Docker)
 
 ### Setup and run
 
@@ -60,16 +58,17 @@ Then create a local `.env` file based on `.env.example`:
 Copy-Item .env.example .env
 ```
 
-Fill in the placeholder values in `.env` with your local settings, then run:
+The `.env` file contains local PostgreSQL settings, datasource settings, the internal service token, and the JWT signing secret used by Docker Compose.
+
+You can keep the example values for a standard local run, or replace them with your own local values before startup.
 
 ```powershell
-mvn -f auth-api/pom.xml clean package -DskipTests
-mvn -f data-api/pom.xml clean package -DskipTests
 docker compose up -d --build
 docker compose ps
 ```
 
 All three services (`auth-api`, `data-api`, `postgres`) should be running, and PostgreSQL should be healthy before the verification script is executed.
+Docker images are built with multi-stage Dockerfiles, so a separate local `mvn package` step is not required before `docker compose up -d --build`.
 
 Start a local verification:
 
@@ -113,8 +112,9 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 
 ## Reviewer checklist
 
-- Clone the repository and prepare `.env` from `.env.example`.
-- Build both services with Maven.
+- Clone the repository.
+- Create `.env` from `.env.example`.
+- Optionally replace the example local secrets and connection settings.
 - Start the stack with `docker compose up -d --build`.
 - Confirm that `auth-api`, `data-api`, and `postgres` are running.
 - Run `.\scripts\verify-local.ps1`.
@@ -124,6 +124,3 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
-
-Release `v0.3.4` keeps local verification and container build steps compatible with release-versioned Maven artifacts by removing hardcoded snapshot JAR assumptions from the verification flow and service Dockerfiles.
-
