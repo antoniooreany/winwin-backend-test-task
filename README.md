@@ -105,9 +105,9 @@ Detailed validation steps are available in the [Verification guide](./docs/verif
 
 Available after the stack is started with `docker compose up -d --build`:
 
-- `auth-api`: `http://localhost:8080`
-- `data-api`: `http://localhost:8081`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- `auth-api`: `[http://localhost:8080](http://localhost:8080)`
+- `data-api`: `[http://localhost:8081](http://localhost:8081)`
+- Swagger UI: `[[http://localhost:8080](http://localhost:8080)/swagger-ui.html]([http://localhost:8080](http://localhost:8080)/swagger-ui.html)`
 
 Health response examples:
 
@@ -141,4 +141,5 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
 
