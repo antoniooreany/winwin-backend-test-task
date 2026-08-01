@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-08-01
+
+### Changed
+- Release polishing.
+
 ## [0.3.3] - 2026-07-31
 
 ### Documentation
@@ -115,4 +120,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
-
