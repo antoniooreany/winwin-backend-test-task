@@ -8,19 +8,20 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: **v0.3.5**
-Previous stable releases: 0.3.4, 0.3.3, 0.3.2, 0.3.1, 0.3.0, 0.2.0, 0.1.0
-Earlier pre-release: 0.1.0-rc1
+Current stable release: **v0.3.5**  
+Previous stable releases: `v0.3.4`, `v0.3.3`, `v0.3.2`, `v0.3.1`, `v0.3.0`, `v0.2.0`, `v0.1.0`  
+Earlier pre-release: `v0.1.0-rc1`
 
 This repository models a backend interview test task and has been iteratively improved with:
 
 - CI pipeline running module tests and Docker Compose smoke checks.
 - Testcontainers-backed integration test for the auth API flow.
 - Multi-stage Docker builds for both services.
-- Centralized versioning via .version and a PowerShell helper.
+- Centralized versioning via `.version` and a PowerShell helper.
 
-Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).
+Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).  
 For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
+
 ## Overview
 
 The project includes:
