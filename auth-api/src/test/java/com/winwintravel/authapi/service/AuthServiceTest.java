@@ -17,6 +17,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.winwintravel.authapi.audit.AuthAuditLogService;
 import com.winwintravel.authapi.auth.JwtService;
 import com.winwintravel.authapi.auth.dto.AuthResponse;
 import com.winwintravel.authapi.auth.dto.LoginRequest;
@@ -41,6 +42,9 @@ class AuthServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
+    private AuthAuditLogService authAuditLogService;
 
     @InjectMocks
     private AuthService authService;
@@ -94,9 +98,9 @@ class AuthServiceTest {
         verify(authenticationManager).authenticate(
                 any(UsernamePasswordAuthenticationToken.class)
         );
+        verify(authAuditLogService).logLoginAttempt(VALID_EMAIL, true);
         verify(jwtService).generateToken(VALID_EMAIL);
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
     }
 }
-
