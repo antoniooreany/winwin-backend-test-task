@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-08-01
+- Backend test task improvements: CI tests, Testcontainers, multi-stage Docker, smoke tests
+
 ## [0.3.4] - 2026-08-01
 
 ### Changed
