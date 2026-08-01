@@ -107,13 +107,26 @@ try {
     }
 
     Info-Step "Ensure service JAR files exist"
-    if (Test-Path ".\auth-api\target\auth-api-0.0.1-SNAPSHOT.jar") {
+    Info-Step "Ensure service JAR files exist"
+    $authJar = Get-ChildItem ".\auth-api\target\auth-api-*.jar" -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notlike "*.jar.original" } |
+        Select-Object -First 1
+    if ($authJar) {
         Pass-Step "auth-api JAR exists"
     } else {
         throw "auth-api JAR missing"
     }
 
-    if (Test-Path ".\data-api\target\data-api-0.0.1-SNAPSHOT.jar") {
+    $dataJar = Get-ChildItem ".\data-api\target\data-api-*.jar" -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notlike "*.jar.original" } |
+        Select-Object -First 1
+    if ($dataJar) {
+        Pass-Step "data-api JAR exists"
+    } else {
+        throw "data-api JAR missing"
+    }
+        Select-Object -First 1
+    if ($dataJar) {
         Pass-Step "data-api JAR exists"
     } else {
         throw "data-api JAR missing"
