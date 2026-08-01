@@ -133,7 +133,7 @@ try {
     $authReady = $false
     for ($i = 0; $i -lt 45; $i++) {
         try {
-            $authHealth = Get-Json "http://localhost:8080/health"
+            $authHealth = Get-Json "http://127.0.0.1:8080/health"
             if ($authHealth.status -eq "ok" -and $authHealth.service -eq "auth-api") {
                 $authReady = $true
                 break
@@ -152,7 +152,7 @@ try {
     $dataReady = $false
     for ($i = 0; $i -lt 45; $i++) {
         try {
-            $dataHealth = Get-Json "http://localhost:8081/health"
+            $dataHealth = Get-Json "http://127.0.0.1:8081/health"
             if ($dataHealth.status -eq "ok" -and $dataHealth.service -eq "data-api") {
                 $dataReady = $true
                 break
@@ -168,8 +168,8 @@ try {
     }
 
     Info-Step "Show health responses"
-    $authHealthFinal = Get-Json "http://localhost:8080/health"
-    $dataHealthFinal = Get-Json "http://localhost:8081/health"
+    $authHealthFinal = Get-Json "http://127.0.0.1:8080/health"
+    $dataHealthFinal = Get-Json "http://127.0.0.1:8081/health"
     ($authHealthFinal | ConvertTo-Json -Compress) | Tee-Object -FilePath $report -Append | Out-Host
     ($dataHealthFinal | ConvertTo-Json -Compress) | Tee-Object -FilePath $report -Append | Out-Host
     Pass-Step "Health endpoints returned valid JSON"
@@ -179,7 +179,7 @@ try {
     $password = "Pass12345!"
     $registerJson = @{ email = $email; password = $password } | ConvertTo-Json -Compress
 
-    $registerCode = & curl.exe -s -o NUL -w "%{http_code}" -X POST "http://localhost:8080/api/auth/register" -H "Content-Type: application/json" -d $registerJson
+    $registerCode = & curl.exe -s -o NUL -w "%{http_code}" -X POST "http://127.0.0.1:8080/api/auth/register" -H "Content-Type: application/json" -d $registerJson
     if ($registerCode -eq "201") {
         Pass-Step "Registration returned HTTP 201"
     } else {
@@ -188,7 +188,7 @@ try {
 
     Info-Step "Login user"
     $loginJson = @{ email = $email; password = $password } | ConvertTo-Json -Compress
-    $loginRaw = Post-Json -Url "http://localhost:8080/api/auth/login" -JsonBody $loginJson
+    $loginRaw = Post-Json -Url "http://127.0.0.1:8080/api/auth/login" -JsonBody $loginJson
     $loginResponse = $loginRaw | ConvertFrom-Json
     $token = $loginResponse.token
     if ($token) {
@@ -199,7 +199,7 @@ try {
 
     Info-Step "Call protected process endpoint"
     $processJson = @{ text = "hello" } | ConvertTo-Json -Compress
-    $processRaw = Post-Json -Url "http://localhost:8080/api/process" -JsonBody $processJson -Headers @("Authorization: Bearer $token")
+    $processRaw = Post-Json -Url "http://127.0.0.1:8080/api/process" -JsonBody $processJson -Headers @("Authorization: Bearer $token")
     $processResponse = $processRaw | ConvertFrom-Json
     ($processResponse | ConvertTo-Json -Compress) | Tee-Object -FilePath $report -Append | Out-Host
     if ($processResponse.result -eq "olleh") {
@@ -219,7 +219,7 @@ try {
     }
 
     Info-Step "Negative scenario: no JWT"
-    $code = Get-StatusCode -Url "http://localhost:8080/api/process" -JsonBody $processJson
+    $code = Get-StatusCode -Url "http://127.0.0.1:8080/api/process" -JsonBody $processJson
     if ($code -eq "401" -or $code -eq "403") {
         Pass-Step "Protected endpoint correctly rejected request without JWT ($code)"
     } else {
@@ -227,7 +227,7 @@ try {
     }
 
     Info-Step "Negative scenario: direct access to data-api without internal token"
-    $code = Get-StatusCode -Url "http://localhost:8081/api/transform" -JsonBody $processJson
+    $code = Get-StatusCode -Url "http://127.0.0.1:8081/api/transform" -JsonBody $processJson
     if ($code -eq "403") {
         Pass-Step "data-api correctly rejected request without internal token (403)"
     } else {
@@ -235,7 +235,7 @@ try {
     }
 
     Info-Step "Negative scenario: wrong internal token"
-    $code = Get-StatusCode -Url "http://localhost:8081/api/transform" -JsonBody $processJson -Headers @("X-Internal-Token: wrong-token")
+    $code = Get-StatusCode -Url "http://127.0.0.1:8081/api/transform" -JsonBody $processJson -Headers @("X-Internal-Token: wrong-token")
     if ($code -eq "403") {
         Pass-Step "data-api correctly rejected request with wrong internal token (403)"
     } else {
@@ -266,3 +266,4 @@ finally {
     }
     Write-Report "=============================="
 }
+

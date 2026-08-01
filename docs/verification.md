@@ -86,8 +86,8 @@ If you want to repeat the authentication flow manually, use any HTTP client such
 
 Manual flow:
 
-1. Register: send `POST http://localhost:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
-2. Login: send `POST http://localhost:8080/api/auth/login` with the same JSON body.
+1. Register: send `POST http://127.0.0.1:8080/api/auth/register` with JSON body: `{"email":"reviewer@example.com","password":"Pass12345!"}`
+2. Login: send `POST http://127.0.0.1:8080/api/auth/login` with the same JSON body.
 3. Extract the returned JWT token from the login response.
 
 Expected:
@@ -101,7 +101,7 @@ For the shortest and most reproducible path, prefer the automated [scripts/verif
 
 Send a request with a valid JWT token:
 
-- `POST http://localhost:8080/api/process`
+- `POST http://127.0.0.1:8080/api/process`
 - JSON body: `{"text":"hello"}`
 
 Expected response:
@@ -144,7 +144,7 @@ before querying the `processinglog` table.
 
 ### 6. Negative scenario: no JWT
 
-Send a request to `POST http://localhost:8080/api/process` without an `Authorization` header.
+Send a request to `POST http://127.0.0.1:8080/api/process` without an `Authorization` header.
 
 Expected:
 
@@ -153,7 +153,7 @@ Expected:
 
 ### 7. Negative scenario: direct access to data-api without internal token
 
-Send a request to `POST http://localhost:8081/api/transform` without `X-Internal-Token`.
+Send a request to `POST http://127.0.0.1:8081/api/transform` without `X-Internal-Token`.
 
 Expected:
 
@@ -162,7 +162,7 @@ Expected:
 
 ### 8. Negative scenario: wrong internal token
 
-Send a request to `POST http://localhost:8081/api/transform` with an incorrect `X-Internal-Token` header.
+Send a request to `POST http://127.0.0.1:8081/api/transform` with an incorrect `X-Internal-Token` header.
 
 Expected:
 
@@ -186,3 +186,4 @@ Reviewer-facing documentation for this release keeps the local setup, verificati
 ## Docker build note
 
 The service images are built with multi-stage Dockerfiles. For the standard local verification path, running `docker compose up -d --build` is sufficient and does not require a separate manual Maven packaging step beforehand.
+

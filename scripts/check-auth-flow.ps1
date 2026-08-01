@@ -1,5 +1,5 @@
 param(
-    [string]$BaseUrl = "http://localhost:8080",
+    [string]$BaseUrl = "http://127.0.0.1:8080",
     [string]$Email = "user@example.com",
     [string]$Password = "Pass12345!",
     [string[]]$Texts = @("hello", "WinWin Travel", "backend test")
@@ -38,30 +38,28 @@ $login = Invoke-JsonPost -Url "$BaseUrl/api/auth/login" -Body @{
     email = $Email
     password = $Password
 }
-
-if (-not $login.token) {
-    throw "Login failed: token not returned"
-}
+Write-Host "Login OK" -ForegroundColor Green
 
 $token = $login.token
-$headers = @{ Authorization = "Bearer $token" }
-
-Write-Host "Login OK" -ForegroundColor Green
+if (-not $token) {
+    throw "JWT token was not returned"
+}
 
 Write-Host "`n=== PROCESS ===" -ForegroundColor Cyan
 foreach ($text in $Texts) {
-    $response = Invoke-JsonPost -Url "$BaseUrl/api/process" -Headers $headers -Body @{
-        text = $text
+    $response = Invoke-JsonPost -Url "$BaseUrl/api/process" -Body @{ text = $text } -Headers @{
+        Authorization = "Bearer $token"
     }
 
-    Write-Host ("INPUT  : " + $text) -ForegroundColor DarkCyan
-    Write-Host ("OUTPUT : " + ($response | ConvertTo-Json -Compress)) -ForegroundColor Green
+    Write-Host ("INPUT  : {0}" -f $text)
+    Write-Host ("OUTPUT : {0}" -f ($response | ConvertTo-Json -Compress))
 }
 
 Write-Host "`n=== PROCESSING LOG ===" -ForegroundColor Cyan
-$pg = docker compose ps -q postgres
+$pg = docker ps --format "{{.Names}}" | Select-String "postgres" | Select-Object -First 1
 if (-not $pg) {
-    throw "Postgres container not found"
+    throw "Postgres container was not found"
 }
 
+$pg = $pg.ToString().Trim()
 docker exec -i $pg psql -U appuser -d appdb -c "select id, user_email, input_text, output_text, created_at from processinglog order by id desc limit 10;"

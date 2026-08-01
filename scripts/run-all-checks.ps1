@@ -1,6 +1,6 @@
 param(
-    [string]$BaseUrl = "http://localhost:8080",
-    [string]$DataApiUrl = "http://localhost:8081",
+    [string]$BaseUrl = "http://127.0.0.1:8080",
+    [string]$DataApiUrl = "http://127.0.0.1:8081",
     [string]$Email = "user@example.com",
     [string]$Password = "Pass12345!",
     [string[]]$Texts = @("hello", "hello world", "WinWin Travel"),
@@ -293,5 +293,6 @@ Show-ProcessingLog
 
 Write-Step "DONE"
 Write-Host "All checks completed" -ForegroundColor Green
+
 
 
