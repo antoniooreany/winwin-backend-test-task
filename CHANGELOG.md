@@ -1,4 +1,4 @@
-## v0.3.6 - 2026-08-02
+## v0.3.7 - 2026-08-02
 
 ### Added
 - Added `scripts/dev-tools.ps1` with `Invoke-FullVerificationShort` and `Show-FullVerificationFailures` for shorter local verification output and failure inspection.
@@ -6,7 +6,7 @@
 ### Changed
 - Updated `scripts/full-verification.ps1` to validate actual built JAR files using wildcard matching instead of hardcoded snapshot filenames.
 - Updated README documentation with the full verification helper section and improved Markdown links where appropriate.
-- Bumped project version metadata to `0.3.6`.
+- Bumped project version metadata to `0.3.7`.
 
 ### Tests
 - Updated `ProcessingHistoryIntegrationTest` to extend `PostgresIntegrationTestBase` for consistent PostgreSQL-backed integration testing.
@@ -15,7 +15,7 @@
 - Full verification still exposes a separate `auth-api did not become healthy` health-check timing issue, which is now easier to inspect via the new dev-tools helpers.
 
 
-## [0.3.5] - 2026-08-01
+## v0.3.6 - 2026-08-01
 
 ### Added
 - End-to-end auth-api integration test backed by PostgreSQL Testcontainers.
@@ -26,12 +26,12 @@
 - auth-api and data-api Dockerfiles now use multi-stage builds.
 - Repository versioning is centralized via `.version` and `scripts/set-version.ps1`.
 
-## [0.3.4] - 2026-08-01
+## v0.3.4 - 2026-08-01
 
 ### Changed
 - Release polishing.
 
-## [0.3.3] - 2026-07-31
+## v0.3.3 - 2026-07-31
 
 ### Documentation
 
@@ -39,7 +39,7 @@
 - Added release history alignment for reviewer-facing documentation.
 - Linked the verification guide to the current published release context.
 
-## [0.3.1] - 2026-07-31
+## v0.3.1 - 2026-07-31
 
 ### Documentation
 
@@ -55,7 +55,7 @@
 - aligned schema references to `processinglog`
 - clarified verification flow and smoke-test usage
 
-## [0.3.0] - 2026-07-25
+## v0.3.0 - 2026-07-25
 
 ### Added
 
@@ -83,7 +83,7 @@
 - `0.3.0` is the current stable reviewer-facing release
 - earlier releases (`0.2.0`, `0.1.0`, `0.1.0-rc1`) remain available for historical context
 
-## [0.2.0] - 2026-07-20
+## v0.2.0 - 2026-07-20
 
 ### Added
 
@@ -106,7 +106,7 @@
 
 - end-to-end integration tests are not yet exhaustive
 
-## [0.1.0] - 2026-07-18
+## v0.1.0 - 2026-07-18
 
 ### Added
 
@@ -138,6 +138,9 @@
 - no persistent database configuration wired for production
 - internal communication between [`auth-api`](./auth-api) and [`data-api`](./data-api) still minimal
 - end-to-end integration tests are not yet exhaustive
+
+
+
 
 
 
