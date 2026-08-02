@@ -8,8 +8,8 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: v0.3.6 – Processing history & auth log improvements
-Previous stable releases: v0.3.5, v0.3.4, v0.3.3, v0.3.2, v0.3.1, v0.3.0, v0.2.0, v0.1.0
+Current stable release: **v0.3.7** – Processing history & auth log improvements
+Previous stable releases: v0.3.6, v0.3.5, v0.3.4, v0.3.3, v0.3.2, v0.3.1, v0.3.0, v0.2.0, v0.1.0
 Earlier pre-release: v0.1.0-rc1
 
 This repository models a backend interview test task and has been iteratively improved with:
@@ -151,3 +151,6 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+
+

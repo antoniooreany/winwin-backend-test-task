@@ -1,5 +1,6 @@
 package com.winwintravel.authapi.service;
 
+import com.winwintravel.authapi.audit.AuthAuditLogService;
 import com.winwintravel.authapi.auth.JwtService;
 import com.winwintravel.authapi.auth.dto.AuthResponse;
 import com.winwintravel.authapi.auth.dto.LoginRequest;
@@ -19,17 +20,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final AuthAuditLogService authAuditLogService;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            AuthenticationManager authenticationManager
+            AuthenticationManager authenticationManager,
+            AuthAuditLogService authAuditLogService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
+        this.authAuditLogService = authAuditLogService;
     }
 
     public void register(RegisterRequest request) {
@@ -45,14 +49,21 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        String token = jwtService.generateToken(request.getEmail());
-        return new AuthResponse(token);
+            authAuditLogService.logLoginAttempt(request.getEmail(), true);
+
+            String token = jwtService.generateToken(request.getEmail());
+            return new AuthResponse(token);
+        } catch (RuntimeException ex) {
+            authAuditLogService.logLoginAttempt(request.getEmail(), false);
+            throw ex;
+        }
     }
 }
