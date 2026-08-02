@@ -1,0 +1,91 @@
+
+== Git sanity check ==
+[PASS] Git status checked
+
+== Build services ==
+[PASS] auth-api built successfully
+[PASS] data-api built successfully
+
+== Ensure service JAR files exist ==
+[PASS] Required JAR files are available
+
+== Docker Compose reset ==
+ Volume winwin-backend-test-task_pgdata Removing 
+ Volume winwin-backend-test-task_pgdata Removed 
+ Image winwin-backend-test-task-auth-api Building 
+ Image winwin-backend-test-task-data-api Building 
+ Image winwin-backend-test-task-auth-api Built 
+ Image winwin-backend-test-task-data-api Built 
+ Network winwin-backend-test-task_app-net Creating 
+ Network winwin-backend-test-task_app-net Created 
+ Volume winwin-backend-test-task_pgdata Creating 
+ Volume winwin-backend-test-task_pgdata Created 
+ Container winwin-backend-test-task-postgres-1 Creating 
+ Container winwin-backend-test-task-data-api-1 Creating 
+ Container winwin-backend-test-task-postgres-1 Created 
+ Container winwin-backend-test-task-auth-api-1 Creating 
+ Container winwin-backend-test-task-data-api-1 Created 
+ Container winwin-backend-test-task-auth-api-1 Created 
+ Container winwin-backend-test-task-data-api-1 Starting 
+ Container winwin-backend-test-task-postgres-1 Starting 
+ Container winwin-backend-test-task-data-api-1 Started 
+ Container winwin-backend-test-task-postgres-1 Started 
+ Container winwin-backend-test-task-postgres-1 Waiting 
+ Container winwin-backend-test-task-postgres-1 Healthy 
+ Container winwin-backend-test-task-auth-api-1 Starting 
+ Container winwin-backend-test-task-auth-api-1 Started 
+[PASS] Docker Compose started
+
+== Wait for services ==
+curl: (52) Empty reply from server
+curl: (52) Empty reply from server
+curl: (52) Empty reply from server
+curl: (52) Empty reply from server
+curl: (52) Empty reply from server
+curl: (52) Empty reply from server
+[PASS] auth-api health is ready
+[PASS] data-api health is ready
+
+== Register user ==
+[PASS] Registration returned HTTP 201
+
+== Login user ==
+[PASS] Login returned JWT token
+
+== Call protected process endpoint ==
+[PASS] Protected endpoint returned expected result
+
+== Database verification ==
+[PASS] processinglog contains expected persisted row
+
+== Negative check without JWT ==
+[PASS] Protected endpoint correctly rejected request without JWT (403)
+
+== Negative check: direct access to data-api ==
+[PASS] data-api correctly rejected direct access without internal token (403)
+
+== Negative check: wrong internal token ==
+[PASS] data-api correctly rejected wrong internal token (403)
+
+== Docker Compose shutdown ==
+ Container winwin-backend-test-task-auth-api-1 Stopping 
+ Container winwin-backend-test-task-data-api-1 Stopping 
+ Container winwin-backend-test-task-data-api-1 Stopped 
+ Container winwin-backend-test-task-data-api-1 Removing 
+ Container winwin-backend-test-task-data-api-1 Removed 
+ Container winwin-backend-test-task-auth-api-1 Stopped 
+ Container winwin-backend-test-task-auth-api-1 Removing 
+ Container winwin-backend-test-task-auth-api-1 Removed 
+ Container winwin-backend-test-task-postgres-1 Stopping 
+ Container winwin-backend-test-task-postgres-1 Stopped 
+ Container winwin-backend-test-task-postgres-1 Removing 
+ Container winwin-backend-test-task-postgres-1 Removed 
+ Network winwin-backend-test-task_app-net Removing 
+ Network winwin-backend-test-task_app-net Removed 
+[PASS] Docker Compose stopped
+
+==============================
+Smoke Test Summary
+Passed: 15
+Failed: 0
+RESULT: PASS
