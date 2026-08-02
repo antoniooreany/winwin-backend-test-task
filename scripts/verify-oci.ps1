@@ -1,12 +1,32 @@
 param(
-    [Parameter(Mandatory = $true)][string]$VmHost,
+    [string]$VmHost,
+    [string]$BaseUrl,
     [string]$Protocol = "http",
     [int]$TimeoutSec = 300
 )
 
 $ErrorActionPreference = "Stop"
-$authBaseUrl = "{0}://{1}:8080" -f $Protocol, $VmHost
-$dataBaseUrl = "{0}://{1}:8081" -f $Protocol, $VmHost
+
+if (-not $BaseUrl -and -not $VmHost) {
+    throw "Specify either -BaseUrl or -VmHost"
+}
+
+if ($BaseUrl -and $VmHost) {
+    throw "Use only one of: -BaseUrl or -VmHost"
+}
+
+if ($BaseUrl) {
+    $baseUri = [Uri]$BaseUrl
+    $scheme = $baseUri.Scheme
+    $hostName = $baseUri.Host
+    $authBaseUrl = "{0}://{1}:8080" -f $scheme, $hostName
+    $dataBaseUrl = "{0}://{1}:8081" -f $scheme, $hostName
+}
+else {
+    $authBaseUrl = "{0}://{1}:8080" -f $Protocol, $VmHost
+    $dataBaseUrl = "{0}://{1}:8081" -f $Protocol, $VmHost
+}
+
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 
 function Wait-HttpOk {
