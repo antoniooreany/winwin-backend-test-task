@@ -8,8 +8,8 @@ Small two-service Spring Boot solution for the WinWin.travel backend test task.
 
 ## Release status
 
-Current stable release: v0.3.6 – Processing history & auth log improvements
-Previous stable releases: v0.3.5, v0.3.4, v0.3.3, v0.3.2, v0.3.1, v0.3.0, v0.2.0, v0.1.0
+Current stable release: v0.3.7 – full verification helpers, OCI deploy scripts, docs polish  
+Previous stable releases: v0.3.6, v0.3.5, v0.3.4, v0.3.3, v0.3.2, v0.3.1, v0.3.0, v0.2.0, v0.1.0  
 Earlier pre-release: v0.1.0-rc1
 
 This repository models a backend interview test task and has been iteratively improved with:
@@ -18,6 +18,7 @@ This repository models a backend interview test task and has been iteratively im
 - Testcontainers-backed integration test for the `[auth-api](./auth-api)` flow.
 - Multi-stage Docker builds for both `[auth-api](./auth-api)` and `[data-api](./data-api)`.
 - Centralized versioning via `[.version](./.version)` and `[scripts/set-version.ps1](./scripts/set-version.ps1)`.
+- Full verification helpers and OCI deployment/verification scripts for running the solution both locally and against an OCI-based environment.
 
 Full release history: see [GitHub Releases](https://github.com/antoniooreany/winwin-backend-test-task/releases).  
 For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
@@ -30,8 +31,7 @@ For repository-level version history, see [CHANGELOG.md](./CHANGELOG.md).
 - Test strategy that combines unit tests with a [PostgreSQL](https://www.postgresql.org/)-backed Testcontainers integration test and a Docker Compose smoke verification script.
 - Continuous integration pipeline that runs module tests and stack-level smoke checks on each release.
 - GitFlow-style branching model with feature, develop, release, and main branches, tagged releases, and curated changelog/documentation for reviewers.
-
-
+- Dual verification paths: local full verification and remote verification against an OCI VM using dedicated scripts.
 
 ## Overview
 
@@ -55,16 +55,12 @@ For more detail, see [Architecture overview](./docs/architecture.md), [Technical
 
 ## Quick start
 
-
-
 ### Prerequisites
 
 - Java 21
 - PowerShell
 - Docker Desktop running
 - Maven (optional, only for manual local builds outside Docker)
-
-
 
 ### Setup and run
 
@@ -90,7 +86,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-All three services (`auth-api`, `data-api`, `postgres`) should be running, and [PostgreSQL](https://www.postgresql.org/) should be healthy before the verification script is executed.
+All three services (`auth-api`, `data-api`, `postgres`) should be running, and [PostgreSQL](https://www.postgresql.org/) should be healthy before the verification script is executed.  
 Docker images are built with multi-stage Dockerfiles, so a separate local `mvn package` step is not required before `docker compose up -d --build`.
 
 Start a local verification:
@@ -106,6 +102,42 @@ docker compose down
 ```
 
 Detailed validation steps are available in the [Verification guide](./docs/verification.md). For implementation context, see [Architecture overview](./docs/architecture.md), [Technical decisions](./docs/decisions.md), and [Known issues and trade-offs](./KNOWN-ISSUES.md).
+
+### OCI verification flow (optional)
+
+For reviewers who want to run the stack against an OCI VM, the repository provides helper scripts:
+
+1. Obtain the public IP of your OCI VM (for example `89.168.27.24`) from the OCI Console (Compute → Instances → your VM).
+2. SSH into the VM:
+
+   ```powershell
+   ssh ubuntu@<OCI_VM_PUBLIC_IP>
+   ```
+
+3. Deploy the Docker stack to the OCI VM:
+
+   ```powershell
+   .\scripts\deploy-oci.ps1 `
+     -Host "<OCI_VM_PUBLIC_IP>" `
+     -User "ubuntu" `
+     -SshKeyPath "$HOME\.ssh\id_ed25519" `
+     -OciProfile "DEFAULT" `
+     -Region "eu-milan-1"
+   ```
+
+4. Run remote verification against the OCI-based environment:
+
+   ```powershell
+   .\scripts\verify-oci.ps1 `
+     -Host "<OCI_VM_PUBLIC_IP>" `
+     -Protocol "http" `
+     -TimeoutSec 300
+   ```
+
+Both the local environment and the OCI-based environment are able to complete the full verification flow:
+
+- Local: `scripts/full-verification.ps1` – PASS (including registration 201/409 handling).
+- OCI: `scripts/deploy-oci.ps1` + `scripts/verify-oci.ps1` against an OCI VM in `eu-milan-1` – PASS.
 
 ## Endpoints
 
@@ -132,8 +164,7 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 - [Security policy](./SECURITY.md)
 - [Changelog](./CHANGELOG.md)
 - [Local verification script](./scripts/verify-local.ps1)
-
-
+- OCI deployment and verification helpers: `[scripts/deploy-oci.ps1](./scripts/deploy-oci.ps1)`, `[scripts/verify-oci.ps1](./scripts/verify-oci.ps1)`
 
 ## Reviewer checklist
 
@@ -143,10 +174,11 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 - Start the stack with `docker compose up -d --build`.
 - Confirm that `auth-api`, `data-api`, and `postgres` are running.
 - Run `.\scripts\verify-local.ps1`.
+- Optionally:
+  - Run `scripts/full-verification.ps1` locally for a full check.
+  - Use `scripts/deploy-oci.ps1` + `scripts/verify-oci.ps1` to run the full verification flow against an OCI VM.
 - Optionally check the health endpoints and Swagger UI.
 - Stop the stack cleanly with `docker compose down`.
-
-
 
 ## License
 
