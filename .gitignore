@@ -50,3 +50,29 @@ project-context-2/
 project-context-3/
 project-review/
 $PROFILE
+
+# Verification logs
+full-verification-log.txt
+verify-log.txt
+*.log
+
+# Java build artifacts
+**/target/
+*.jar
+*.class
+
+# Local backup files
+*.bak.*
+
+# Verification logs
+full-verification-log.txt
+verify-log.txt
+*.log
+
+# Java build artifacts
+**/target/
+*.jar
+*.class
+
+# Local backup files
+*.bak.*
