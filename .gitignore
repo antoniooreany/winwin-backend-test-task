@@ -17,11 +17,9 @@ Thumbs.db
 .env
 
 # Logs
-*.log
 logs/
 
 # Java / build artifacts
-*.class
 
 # Scripts
 scripts/debug-auth-security.ps1
@@ -41,7 +39,6 @@ winwin-backend-test-task/
 winwin-backend-test-task/
 full-verification-report.txt
 .logs/
-**/target/
 smoke-report.txt
 
 # local analysis artifacts
@@ -51,18 +48,11 @@ project-context-3/
 project-review/
 $PROFILE
 
-# Verification logs
-full-verification-log.txt
-verify-log.txt
-*.log
 
-# Java build artifacts
-**/target/
-*.jar
-*.class
 
-# Local backup files
-*.bak.*
+
+
+
 
 # Verification logs
 full-verification-log.txt
