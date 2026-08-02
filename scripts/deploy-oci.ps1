@@ -19,6 +19,24 @@ function Run-Step {
     }
 }
 
+function Invoke-RobocopySafe {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$Target
+    )
+
+    Write-Host "    robocopy: $Source -> $Target" -ForegroundColor DarkGray
+
+    robocopy $Source $Target /E /XD target .git .idea .vscode /XF *.jar *.class *.log *.bak.* | Out-Host
+    $rc = $LASTEXITCODE
+
+    if ($rc -ge 8) {
+        throw "robocopy failed for '$Source' with exit code $rc"
+    }
+
+    $global:LASTEXITCODE = 0
+}
+
 if (-not (Test-Path $SshKeyPath)) {
     throw "SSH private key not found: $SshKeyPath"
 }
@@ -41,6 +59,7 @@ Run-Step "Preparing local staging directory" {
         Remove-Item $stageRoot -Recurse -Force
     }
     New-Item -ItemType Directory -Path $stageRoot | Out-Null
+    $global:LASTEXITCODE = 0
 }
 
 Run-Step "Collecting deployable files into staging directory" {
@@ -58,15 +77,15 @@ Run-Step "Collecting deployable files into staging directory" {
         $target = Join-Path $stageRoot $item
 
         if (Test-Path $source -PathType Container) {
-            robocopy $source $target /E /XD target .git .idea .vscode /XF *.jar *.class *.log *.bak.* | Out-Null
-            if ($LASTEXITCODE -gt 7) {
-                throw "robocopy failed for directory: $item"
-            }
+            Invoke-RobocopySafe -Source $source -Target $target
         }
         else {
+            Write-Host "    copy: $source -> $target" -ForegroundColor DarkGray
             Copy-Item $source $target -Force
         }
     }
+
+    $global:LASTEXITCODE = 0
 }
 
 Run-Step "Checking SSH connectivity to $User@$VmHost" {
@@ -108,6 +127,7 @@ Run-Step "Cleaning local staging directory" {
     if (Test-Path $stageRoot) {
         Remove-Item $stageRoot -Recurse -Force
     }
+    $global:LASTEXITCODE = 0
 }
 
 Write-Host ""
