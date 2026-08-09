@@ -2,7 +2,8 @@ param(
     [Parameter(Mandatory = $true)][string]$VmHost,
     [string]$User = "opc",
     [string]$SshKeyPath = $(if ($env:OCI_SSH_KEY) { $env:OCI_SSH_KEY } else { "$HOME\.ssh\id_ed25519_oci" }),
-    [string]$RemoteDir = "/home/opc/winwin-backend-test-task",
+    [string]$RemoteDir = "/home/$User/winwin-backend-test-task",
+    [switch]$Quiet,
     [switch]$SkipBuild,
     [string]$OciProfile = "DEFAULT",
     [string]$Region = "eu-milan-1"
@@ -25,9 +26,13 @@ function Invoke-RobocopySafe {
         [Parameter(Mandatory = $true)][string]$Target
     )
 
-    Write-Host "    robocopy: $Source -> $Target" -ForegroundColor DarkGray
-
-    robocopy $Source $Target /E /XD target .git .idea .vscode /XF *.jar *.class *.log *.bak.* | Out-Host
+    if (-not $Quiet) {
+        Write-Host "    robocopy: $Source -> $Target" -ForegroundColor DarkGray
+        robocopy $Source $Target /E /XD target .git .idea .vscode /XF *.jar *.class *.log *.bak.* | Out-Host
+    }
+    else {
+        robocopy $Source $Target /E /XD target .git .idea .vscode /XF *.jar *.class *.log *.bak.* > $null
+    }
     $rc = $LASTEXITCODE
 
     if ($rc -ge 8) {
@@ -97,7 +102,12 @@ Run-Step "Ensuring remote directory exists" {
 }
 
 Run-Step "Uploading staged files to remote host" {
-    scp @scpOptions -r "$stageRoot\*" "$User@${VmHost}:$RemoteDir/"
+    if ($Quiet) {
+        scp @scpOptions -r "$stageRoot\." "$User@${VmHost}:$RemoteDir/" > $null
+    }
+    else {
+        scp @scpOptions -r "$stageRoot\." "$User@${VmHost}:$RemoteDir/"
+    }
 }
 
 Run-Step "Preparing .env on remote host" {
@@ -136,3 +146,6 @@ Write-Host "Host: $VmHost"
 Write-Host "Remote dir: $RemoteDir"
 Write-Host "Region parameter: $Region"
 Write-Host "OCI profile parameter: $OciProfile"
+
+
+

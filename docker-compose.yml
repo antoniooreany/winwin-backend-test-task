@@ -1,55 +1,51 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - app-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      - postgres_data:/var/lib/postgresql/data
+    mem_limit: 320m
+    mem_reservation: 192m
+    cpus: 0.50
 
   auth-api:
     build:
       context: ./auth-api
-      dockerfile: Dockerfile
+    restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
+      - data-api
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      DATA_API_BASE_URL: ${DATA_API_BASE_URL}
-      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
-      JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/appdb
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: apppass
+      DATA_API_BASE_URL: http://data-api:8081
     ports:
       - "8080:8080"
-    networks:
-      - app-net
+    mem_limit: 384m
+    mem_reservation: 192m
+    cpus: 0.60
 
   data-api:
     build:
       context: ./data-api
-      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
-      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xms96m -Xmx192m"
     ports:
       - "8081:8081"
-    networks:
-      - app-net
-
-networks:
-  app-net:
+    mem_limit: 256m
+    mem_reservation: 128m
+    cpus: 0.40
 
 volumes:
-  pgdata:
+  postgres_data:

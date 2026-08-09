@@ -35,4 +35,5 @@ springdoc:
     path: /swagger-ui.html
     enabled: true
 
-
+jwt:
+  secret: ${JWT_SECRET:very_secret_default_key_for_development_that_is_long_enough_for_hs256}
