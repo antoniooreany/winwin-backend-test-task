@@ -25,7 +25,7 @@ public class ProcessingHistoryService {
         );
 
         var content = processingLogRepository
-                .findByUserEmailOrderByCreatedAtDesc(userEmail, pageable)
+                .findByUser_EmailOrderByCreatedAtDesc(userEmail, pageable)
                 .getContent();
 
         boolean hasMore = content.size() > safeLimit;

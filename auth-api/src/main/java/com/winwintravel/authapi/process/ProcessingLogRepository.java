@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProcessingLogRepository extends JpaRepository<ProcessingLog, Long> {
 
-    Page<ProcessingLog> findByUserEmailOrderByCreatedAtDesc(String userEmail, Pageable pageable);
+    Page<ProcessingLog> findByUser_EmailOrderByCreatedAtDesc(String userEmail, Pageable pageable);
 }
