@@ -4,6 +4,8 @@ This document summarizes the runtime structure referenced from [README.md](../RE
 
 Additional repository guidance is available in [CONTRIBUTING.md](../CONTRIBUTING.md), [SECURITY.md](../SECURITY.md), and [CHANGELOG.md](../CHANGELOG.md).
 
+> **SDD note:** The formal specifications that govern this architecture are located in [`specs/`](../specs/). The authoritative system-level spec is [`specs/system.md`](../specs/system.md). This document provides a narrative summary; the specs are the source of truth for implementation.
+
 ## Runtime Components
 
 The system consists of three local runtime components:

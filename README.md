@@ -206,6 +206,7 @@ For a step-by-step verification path, see [Verification guide](./docs/verificati
 ## Documentation map
 
 
+- [**Specifications (SDD)**](./specs/README.md) — formal specs: [system](./specs/system.md), [API](./specs/api.md), [invariants](./specs/invariants.md), [persistence](./specs/persistence.md)
 - [Architecture overview](./docs/architecture.md)
 - [Technical decisions](./docs/decisions.md)
 - [Verification guide](./docs/verification.md)
